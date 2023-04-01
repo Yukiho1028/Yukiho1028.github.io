@@ -1,0 +1,687 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="Yukiho">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Learning to Assign:Towards Fair Task Assignment in Large-Scale Ride Hailing采用强化学习全面地分配任务，并提出一些加速技巧实现对大规模数据的快速公平的分配。 从司机视角考虑，不公平的分配策略影响司机的感受(the fairness of earnings among drivers) 挑战：  在线设置online sett">
+<meta property="og:type" content="article">
+<meta property="og:title" content="【Note】LTA">
+<meta property="og:url" content="http://example.com/2023/04/01/LTA/index.html">
+<meta property="og:site_name" content="Yukiho&#39;s blog">
+<meta property="og:description" content="Learning to Assign:Towards Fair Task Assignment in Large-Scale Ride Hailing采用强化学习全面地分配任务，并提出一些加速技巧实现对大规模数据的快速公平的分配。 从司机视角考虑，不公平的分配策略影响司机的感受(the fairness of earnings among drivers) 挑战：  在线设置online sett">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/img/Workflow.png">
+<meta property="article:published_time" content="2023-04-01T03:02:04.574Z">
+<meta property="article:modified_time" content="2023-04-01T04:33:30.992Z">
+<meta property="article:author" content="Yukiho">
+<meta property="article:tag" content="Reinforcement Learning">
+<meta property="article:tag" content="Order Dispatch">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/img/Workflow.png">
+  
+  
+  
+  <title>【Note】LTA - Yukiho&#39;s blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>Yukiho&#39;s blog</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/coffee.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="【Note】LTA"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-04-01 11:02" pubdate>
+          2023年4月1日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          30 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">【Note】LTA</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="Learning-to-Assign-Towards-Fair-Task-Assignment-in-Large-Scale-Ride-Hailing"><a href="#Learning-to-Assign-Towards-Fair-Task-Assignment-in-Large-Scale-Ride-Hailing" class="headerlink" title="Learning to Assign:Towards Fair Task Assignment in Large-Scale Ride Hailing"></a>Learning to Assign:Towards Fair Task Assignment in Large-Scale Ride Hailing</h3><p>采用强化学习全面地分配任务，并提出一些加速技巧实现对大规模数据的快速公平的分配。</p>
+<p>从司机视角考虑，不公平的分配策略影响司机的感受(the fairness of earnings among drivers)</p>
+<p>挑战：</p>
+<ol>
+<li>在线设置online setting：高维的时空依赖和变化</li>
+<li>双目标优化bi-objective optimization：在变化的实际限制下同时优化司机的使用率和公平性</li>
+<li>高效率要求high efficiency requirement：市区数据的快速任务分配</li>
+</ol>
+<p>现有的方法的问题：短视，忽略了当前任务分配对未来的影响，缩减了优化空间且降低了利用率和公平性；依赖线性规划或需要多重再分配，在大规模数据上的处理实时响应时效率低下。</p>
+<p>衡量指标：</p>
+<p>使用率utility——所有司机的收入总和</p>
+<p>公平性fairness——一定时间内司机收入的公平性</p>
+<p>本文提出的方法中，通过强化学习学习未来感知的任务策略，将使用率和公平性嵌入到同一个增强操作，并利用二分图的稀疏性实现加速；还提出了一个带权的分期偿还的公平性矩阵来刻画更精细时间粒度下司机收入的公平性。</p>
+<h4 id="问题建模"><a href="#问题建模" class="headerlink" title="问题建模"></a>问题建模</h4><p>将时间 $T$分为多个batch $t$ ，$W$ 和 $R$ 分别表示在 $T$ 内的司机集合和需求集合</p>
+<p><em><strong>Request.</strong></em> 一个订单需求$r\in R$ 用元组$&lt;o_r,d_r.p_r,\tau _r&gt;$ 表示，其中 $o_r,d_r.p_r,\tau _r$分别表示需求 $r$ 的出发地、目的地、价格和持续时间</p>
+<p><em><strong>Driver.</strong></em> 一个出租车司机 $w\in W$ 用元组 $&lt;l_w^{(t)},u_w^{(t)},a_w^{(t)}&gt;$ 表示，其中$l_w^{(t)},u_w^{(t)},a_w^{(t)}$分别表示在 $t$ 内司机 $w$ 的当前位置、收入和状态。$a_w^{(t)}$为0表示司机处于inactive状态(比如不在线)，为1表示司机处于active状态(正在服务一个需求或空闲)，假设一个batch内司机的 $a_w^{(t)}$不变；若司机在 $t$ 内处于空闲状态，则收入为零，即 $u_w^{(t)}&#x3D;0$，若在 $t$ 内服务一个需求，则收入为 $u_w^{(t)}&#x3D;p_r&#x2F;\tau _r$</p>
+<p>P.S. 本文考虑到更真实的司机设置依赖，即未来的司机分布会受当前batch内的司机分布和任务分配影响</p>
+<p><em><strong>Bipartite Graph.</strong></em> 候选任务集用二分图 $G^{(t)}&#x3D;&lt;R^{(t)},W^{(t)},E^{(t)}&gt;$表示，其中$R^{(t)},W^{(t)}$分别表示 $t$ 内待分配的订单和空闲司机。若需求 $r$ 被分配给司机 $w$，那么就有一条权重为 $\theta _{r,w}$的边 $(r,w)\in E^{(t)}$ 连接需求 $r$ 和司机 $w$</p>
+<p>另外，需要设置距离上限，当需求-司机的距离小于该阈值时才存在连接两者的边，同时给每条边$(r,w)$设置一个投影率$\lambda_{r,w}$ 表示其他用户体验相关的因素。距离阈值和投影率均由平台给出，权重$\theta_{r,w}$ 初始化为需求 $r$ 的价格 $p_r$</p>
+<p><em><strong>Total Utility.</strong></em> 给定可重用司机集合 $W$和动态出现的需求集合 $R$，总使用率通过所有司机在总时间 $T$ 内的期望累积收入总和来表示。最大化 $U$ 来优化所有司机的总收入<br>$$<br>U&#x3D;\sum_{w\in W}\mathbb {E}[\sum_{t\in T}u_w^{(t)}]<br>$$<br>$M$ 表示一个有利于优化总使用率和收入公平性的匹配策略。司机 $w$ 的期望累积收入$\mathbb {E}[\sum_{t\in T}u_w^{(t)}]$由匹配结果来决定<br>$$<br>\mathbb {E}[\sum_{t\in T}u_w^{(t)}]&#x3D;\sum_{t\in T}\sum_{(r,w)\in M^{(t)}}(1-\lambda_{w,r})·p_r<br>$$<br><em><strong>Weighted Amortized Fairness.</strong></em> $F_w$ 是司机 $w$ 在加权活跃时间内带权分摊的公平性，其中 $\xi^{(t)}$ 是用于标准化一天内不同时间段潜在收入方差的权重<br>$$<br>F_w&#x3D; \frac {\sum_{t\in T} u_w^{(t)}&#x2F;\xi^{(t)}}{\sum_{t\in T}a_w^{(t)}}<br>$$<br><em><strong>Temporal Earnings Fairness.</strong></em>  收入公平性由带权分摊公平度的熵变量来衡量. 大的 $F$ 表示司机间更为分散的带权分摊公平度，比如不公平的收入分配，所以目标是最小化 $F$<br>$$<br>F&#x3D;-\sum_{w\in W}log(\frac{F_w}{max_{w\in W’}F_{w’}})<br>$$</p>
+<h4 id="算法介绍"><a href="#算法介绍" class="headerlink" title="算法介绍"></a>算法介绍</h4><p><strong><u>基于学习的Re-weighting</u></strong></p>
+<p><strong>线上学习公式化</strong></p>
+<p>司机 $w$ 在状态$(l_w^{(t)},t)$ 下遵循策略 $\pi$ 的价值函数$V_w^{\pi}(l_w^{(t)},t)$ ，通过奖励(rewards)迭代更新价值函数<br>$$<br>V_w^{\pi}(l_w^{(t)},t)\leftarrow V_w^{\pi}(l_w^{(t)},t)+\beta·\Delta_w(\forall w\in W)<br>$$<br>$\beta$是学习率，$\Delta_w$ 的定义如下<br>$$<br>\Delta_W&#x3D;<br>\begin{cases}<br>&amp; p_r+V_w^{\pi}(d_r,t+\tau_r)-V_w^{\pi}(l_w,t)\quad \text{if w gets r}\<br>&amp; 0 \quad \text{if w is idle}<br>\end{cases}<br>$$<br><strong>减少状态数量</strong></p>
+<p>初始状态数可以表示为 $N_S \times N_T$ ，空间状态数乘时间状态数，通过以下两种方式减少状态(states)数量：</p>
+<p>· 空间价值函数估计。将时空状态空间中的原始价值函数估计为仅考虑空间状态的形式，举例，$V_w(d_r,t+\tau _r)&#x3D;V_w(d_r,t)$ 忽略了短暂时间内的状态变化(订单时间一般较短，可以假设不变). 折扣因子 $\gamma $ 用于修正对长持续时间的需求的估计的不准确性.  状态数变化：$N_T ·N_S \rightarrow N_T$<br>$$<br>\Delta_W&#x3D;<br>\begin{cases}<br>&amp; p_r+\gamma ^{\tau <em>r}V_w(d_r,t)-V_w(l_w)\quad \text{if w gets r} \<br>&amp; 0 \quad \text{if w is idle} \end{cases}<br>$$<br>· Agents间的信息共享。 采用合并了所有Agents的价值函数的共享价值函数，更新公式可简化为<br>$$<br>V(l)\leftarrow V(l)+\beta’·\sum</em>{w:l_w^{(t)}\in l}\Delta_w<br>$$<br>其中 $\beta’$ 是标准化后的学习率，$l$ 表示价值函数所有可能的位置</p>
+<p><strong>适应不同市区布局</strong></p>
+<p>将位置离散化为两层结构并分别平滑不同层的价值函数. 将城市分为六边形&#x2F;四边形，有多个方向的六边形适合不规则的城市布局，与经纬度平行的四边形适合用于规则区域。按以下方式平滑价值函数<br>$$<br>V(l)&#x3D;\frac{1}{|DIR_H|+|DIR_S|}(\sum_{x\in DIR_H}H(l+x)+\sum_{x\in DIR_S}S(l+x))<br>$$<br>其中 $S$ 和 $H$ 分别表示六边形和四边形的价值函数，$DIR_H$ 和 $DIR_S$ 明确了两层中平滑指向的偏移量.</p>
+<p><strong>避免线上学习的冷启动</strong></p>
+<p>(Guding) 价值函数初始化为0，导致初始的batch中的任务分配难以考虑到未来情况，需要引导司机提前到合适的区域避免冷启动</p>
+<p><strong><u>双目标任务分配</u></strong></p>
+<p><strong>公平度提升</strong></p>
+<p>(Guiding)直接将公平性检查嵌入最大化总使用率的过程。采用KM算法，先找到一条包含连接和未连接的边的道路，若未连接的边权重大于已连接的边的权重，交换两条边提升总使用率；当搜索一条增广路时，检查司机未来的收入率并拒绝有较大收入率方差的增强；为减少检查量和时间消耗，只检查邻接的两个司机间的增强道路。</p>
+<p><strong>加速</strong></p>
+<p>(Assigning)采用宽度优先搜索(BFS)，将二分图分成多个部分，每个部分可能只有一个司机&#x2F;需求。</p>
+<h4 id="算法流程"><a href="#算法流程" class="headerlink" title="算法流程"></a>算法流程</h4><p><img src="/../img/Workflow.png" srcset="/img/loading.gif" lazyload alt="Workflow"></p>
+<p>首先re-weighting模块结合跨任务的时间依赖精细化给定二分图的边权重，然后双目标任务模块通过公平性增强和其他加速策略找到分配策略，最后基于学习的re-weighting模块再基于分配结果更新权重，并在某些情况下指引空闲司机到指定区域。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%AE%BA%E6%96%87%E7%AC%94%E8%AE%B0/" class="category-chain-item">论文笔记</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Reinforcement-Learning/">#Reinforcement Learning</a>
+      
+        <a href="/tags/Order-Dispatch/">#Order Dispatch</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>【Note】LTA</div>
+      <div>http://example.com/2023/04/01/LTA/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>Yukiho</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年4月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2023/04/01/Fed-LTD%20Towards%20Cross-Platform%20Ride%20Hailing%20via%20Federated%20Learning%20to%20Dispatch/" title="【Note】Fed-LTD">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">【Note】Fed-LTD</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/04/01/Large-Scale%20Order%20Dispatch%20in%20On-Demand%20Ride-Hailing%20Platforms%20A%20Learning%20and%20Planning%20Approach/" title="【Note】Large-Scale Order Dispatch">
+                        <span class="hidden-mobile">【Note】Large-Scale Order Dispatch</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

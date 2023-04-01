@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  
+  
+  
+  <entry>
+    <title>【Note】STSGCN</title>
+    <link href="/2023/04/01/STSGCN/"/>
+    <url>/2023/04/01/STSGCN/</url>
+    
+    <content type="html"><![CDATA[<h3 id="Spatial-Temporal-Synchronous-Graph-Convolutional-Networks-A-New-Framework-for-Spatial-Temporal-Network-Data-Forecasting"><a href="#Spatial-Temporal-Synchronous-Graph-Convolutional-Networks-A-New-Framework-for-Spatial-Temporal-Network-Data-Forecasting" class="headerlink" title="Spatial-Temporal Synchronous Graph Convolutional Networks:A New Framework for Spatial-Temporal Network Data Forecasting"></a>Spatial-Temporal Synchronous Graph Convolutional Networks:A New Framework for Spatial-Temporal Network Data Forecasting</h3><p>STGCN采用两个分离的模块来捕捉时许和空间的依赖性，只能捕捉节点在同一时间步对邻居节点的影响和对下一时间步的自身的影响，不能直接捕捉节点对下一时间步的邻居节点的影响，而是通过将空间表征喂给时序建模组件来间接捕捉。</p><p>提出STSGCN(Network)，直接同步捕捉局部时空关联，构建了能在一张图中关联邻接时间步内独立的空间图的局部时空图，并构建STSGCM (Module)，在局部时空图中捕捉复杂的局部时空关联。设计了STSGCL(Layer)，在不同的时间段部署STSGCM，最后叠加多层来聚合长范围时空关联和异质性用于预测。模型整体架构如下图所示。</p><p><img src="/../img/Model_Archi.png"></p><p>定义空间网络$\mathcal{G}&#x3D;(V,E,A)$，$V$表示$N$个顶点的集合，$E$表示边集合，$A$表示网络$\mathcal {G}$的邻接矩阵；定义图信号矩阵$X^{(t)}_\mathcal{G}\in\R^{N\times C}$表示在时间步$t$空间网络$\mathcal{G}$的观测情况，$C$表示特征的数量。</p><p>问题定义，学习函数$f$，使得$f(X^{(t-T+1)}_\mathcal{G},X^{(t-T+2)}_\mathcal{G},…,X^{(t)}_\mathcal{G})&#x3D;(X^{(t+1)}_\mathcal{G},X^{(t+2)}_\mathcal{G},…,X^{(t+T’)}_\mathcal{G})$</p><p><strong>局部时空图构建</strong></p><p>$A\in\R^{N\times N}$表示空间图的邻接矩阵，$A’\in\R^{3N\times 3N}$表示在三个连续的空间图上构建的局部时空图的邻接矩阵，时间步$t_1$上的节点$i$在时间步$t_2$和$t_3$的节点索引分别为$N+i$和$2N+i$。对角线上表示3个连续时间步空间网络的邻接矩阵，对角线的两侧表示每个节点自身在邻接时间步的连通性。</p><p><img src="/../img/Adj_Matrix.png"></p><p><strong>时空嵌入temporal embedding</strong></p><p>在一张图中连接不同时间步中的节点，模糊了每个节点的时间属性。为更好地建模时空关联，在时空网络序列中加入位置嵌入，同时考虑到空间和时间的信息。对时空网络序列$X_\mathcal{G}\in\R^{N\times C\times T}$，设计一个可学习的时间嵌入矩阵$T_{emb}\in\R^{C\times T}$和空间嵌入矩阵$S_{emb}\in\R^{N\times C}$，经训练后包含必要的时空信息。通过广播操作把两个嵌入矩阵加入到时空网络序列中获得网络序列的新的表示：$X_{\mathcal{G}+t_{emb}+s_{emb}}&#x3D;X_\mathcal{G}+T_{emb}+S_{emb}\in\R^{N\times C\times T}$.</p><p><strong>时空同步图卷积模块STSGCM</strong></p><p>图卷积的输入是局部时空图的图信号矩阵，每个节点聚合了自身和邻居节点在邻接时间步的特征，聚合函数是一个线性函数，其权重与节点和其邻居的边的权重相同，然后部署一个带有激活函数的全连接层把节点特征转换到一个新空间，卷积操作可以用公式表示为$GCN(h^{(l-1)})&#x3D;h^{(l)}&#x3D;\sigma(A’h^{(l-1)}W+b)\in\R^{3N\times C’}$，其中$A’\in\R^{3N\times 3N}$，$h^{(l-1)}\in\R^{3N\times C}$表示第$l$层的输入，可学习参数$W\in\R^{C\times C’},b\in\R^{C’}$，激活函数$\sigma$为$GLU$，控制哪些信息被传递到下一层，图卷积层可以表示为$h^{(l)}&#x3D;(A’h^{(l-1)} W_1+b_1)\otimes \mathcal{sigmoid}(A’h^{(l-1)}W_2+b_2)$，其中可学习参数$W_1\in\R^{C\times C’},W_2\in\R^{C\times C’},b_1\in\R^{C’},b_2\in\R^{C’}$。</p><p>AGG层包含聚合(aggregating)与裁剪(cropping)两步：聚合采用最大池化层，需要所有输出具有同样的大小，所以一个模块内的图卷积操作的内核数应当相等，聚合操作的公式表示为$h_{AGG}&#x3D;max(h^{(1)},h^{(2)},…,h^{(L)})\in\R^{3N\times C_{out}}$，$C_{out}$表示内核数；裁剪用于移除节点在过去和未来时间步的所有特征，去除冗余信息。</p><p><img src="/../img/STSGCM.png"></p><p>如上图所示，STSGCM的输入为一个局部时空图信号矩阵$h^{(0)}\in\R^{3N\times C_{in}}$，经历多个图卷积操作后输出$h^{(i)}\in\R^{3N\times C_{out}}$喂给AGG层，先聚合得到$h_{AGG}\in\R^{3N\times C_{out}}$，经裁剪后得到最后输出$h^{(final)}\in\R^{N\times C_{out}}$。</p><p><strong>时空同步图卷积层STSGCL</strong></p><p>采用滑动窗口来分不同的时间段，在一个STSGCL中部署多个STSGCMs，各自在不同的时间段上建模局部时空关联，以此捕捉长距时空特征。输入矩阵$X\in\R^{T\times N\times C}$，滑动窗口将输入切分成$T-2$个时空网络序列$X\in\R^{3\times N\times C}$，重塑为$X’<em>{reshape}\in\R^{3N\times C}$直接喂给STSGCM。一层STSGCL部署了$T-2$个STSGCMs，他们的输出被拼接成一个矩阵，作为STSGCL的最后输出，公式为$M&#x3D;[M_1,M_2,…,M</em>{T-2}]\in\R^{(T-2)\times N\times C_{out}}$，$M_i\in\R^{N\times C_{out}}$表示第$i$个STSGCM的输出。</p><p><img src="/../img/STSGCL.png"></p><p><strong>Mask matrix</strong></p><p>增加一个可学习的掩码矩阵$W_{mask}\in\R^{3N\times 3N}$，与表示聚合权重的邻接矩阵$A’$作点积，得到基于权重调整的局部邻接矩阵$A’<em>{adjusted}&#x3D;W</em>{mask}\otimes A’\in\R^{3N\times 3N}$。</p><p><strong>Input layer</strong></p><p>在最开始设置一个全连接层以转换输入到一个高维空间，提升网络的可表示性。</p><p><strong>Output layer</strong></p><p>将最后一层STSGCL的输出通过转置和修改输入矩阵的大小，再经过数量为$T’$的两个全连接层，最后拼接来得到期望的预测。</p><p><strong>Loss function</strong></p><p>采用相比均方误差敏感度小一些的Huber loss来计算loss。</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>论文笔记</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Traffic Forecasting</tag>
+      
+      <tag>GCN</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>【Note】STGCN</title>
+    <link href="/2023/04/01/STGCN/"/>
+    <url>/2023/04/01/STGCN/</url>
+    
+    <content type="html"><![CDATA[<h3 id="Spatio-Temporal-Graph-Convolutional-Networks-A-Deep-Learning-Framework-for-Traffic-Forecasting"><a href="#Spatio-Temporal-Graph-Convolutional-Networks-A-Deep-Learning-Framework-for-Traffic-Forecasting" class="headerlink" title="Spatio-Temporal Graph Convolutional Networks:A Deep Learning Framework for Traffic Forecasting"></a>Spatio-Temporal Graph Convolutional Networks:A Deep Learning Framework for Traffic Forecasting</h3><p>在文中提出的图时空网络STGCN中，定义$v^t\in\R^n$为$n$个观测点在时间戳$t$时的观测向量，$\mathcal {G}_t&#x3D;(\mathcal {V}_t,\mathcal {E},W)$，$\mathcal {V}_t$表示顶点(观测点)的集合，$\mathcal {E}$表示边的集合，$W\in \R^{n\times n}$为$\mathcal {G}_t$的邻接权重矩阵。网络的输入为$M$个时间步的图的特征向量$X\in R^{M\times n\times C_i}$，$n$表示观测点的数量，$C_i$是数据的特征向量长度，在文中取1，接下来对模型整体架构展开介绍。</p><p><strong>空域卷积</strong>在每个时间步的图上进行，输入$X\in R^{n\times C_i}$，用Chebyshev多项式近似与一阶近似后的图卷积公式，使得在卷积过程中不仅考虑邻居节点的状态，也考虑自身的状态，再对图卷积运算进行泛化。对于完整的时空图(即对应$M$个时间步)，其输入为$X\in\R^{M\times n\times C_i}$，输出为$Y\in \R^{M\times n\times C_o}$</p><p><img src="/../img/Temporal_Block.png"></p><p>如上图所示，在最右侧的<strong>时域卷积块</strong>中，每个节点处的输入$X\in \R^{M\times C_i}$，沿着时间维度进行一维卷积，时间卷积探索$K_t$个输入的邻居每次将序列长度缩短$K_t-1$，那么每个有着$C_i$个通道的序列长度为$M$的节点的输入可以表示为$Y\in \R^{M\times C_i}$，卷积核 $\Gamma \in \R^{K_t\times C_i\times 2C}$再将$Y$映射为独立的输出元素$[P\ Q]\in \R^{(M-K_t+1)\times (2C_O)}$，分别通过$GLU$激活，<em>sigmoid</em>$ 门$$\sigma(Q)$控制着当前状态的哪个输入$P$与发现时间序列中的组成结构和动态变化相关，非线性门通过堆叠的时间层挖掘输入域。此外，在堆叠的时间卷积层中使用残差连接。同理，可以将卷积核应用于图中的$n$个节点，得到最后的输出$\mathcal{Y}\in \R^{(M-K_t+1)\times n\times C}$。时间门卷积的公式为$\Gamma *_\Tau Y&#x3D;P\odot \sigma(Q)\in \R^{(M-K_t+1)\times C_o}$。</p><p>注：这里对映射输出为单独的P和Q两个元素的方法和原因还不太理解。</p><p><img src="/../img/ST_Conv_Block.png"></p><p>如上图所示，中间的<strong>时空卷积块</strong>(ST-Conv Block)由两个时域卷积块和一个空域卷积块组成，时空卷积块的输入和输出均为3D张量，对于第 $l$个块，输入为$v^l\in \R^{M\times n\times C^l}$，输出为$v^{l+1}\in \R^{(M-2(K_t-1))\times n\times C^{l+1}}$，计算方式为$v^{l+1}&#x3D;\Gamma^l_1*_\mathcal {T}ReLU(\Theta^l*_\mathcal {G}(\Gamma^l_0*_\mathcal {T}v^l))$，其中$\Gamma^l_0$和$\Gamma^l_1$分别为时空块$l$内上面和下面的卷积核，$\Theta^l$是图卷积的谱内核。通过图卷积层对通道进行下缩放和上缩放，实现尺度压缩和特征压缩。</p><p><img src="/../img/Output.png"></p><p>根据时域卷积块的一维卷积，每经过一个时空卷积块，数据在时间维度的长度减小$2(K_t-1)$，在叠加两个时空卷积块后，输出$Y\in\R^{(M-4(K_t-1))\times n\times C_o}$。输出层包括一个时间卷积层和一个全连接层，时间卷积层把第二个时空卷积块的输出映射为单步预测，得到输出$Z\in\R^{n\times c}$，全连接层通过在$c$个通道上应用线性变换计算$n$个节点在$t+1$时间点的预测值$\hat{v}&#x3D;Zw+b$，其中权重参数$w\in\R^c$。</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>论文笔记</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Traffic Forecasting</tag>
+      
+      <tag>GCN</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>【Note】Fed-LTD</title>
+    <link href="/2023/04/01/Fed-LTD%20Towards%20Cross-Platform%20Ride%20Hailing%20via%20Federated%20Learning%20to%20Dispatch/"/>
+    <url>/2023/04/01/Fed-LTD%20Towards%20Cross-Platform%20Ride%20Hailing%20via%20Federated%20Learning%20to%20Dispatch/</url>
+    
+    <content type="html"><![CDATA[<h3 id="Fed-LTD-Towards-Cross-Platform-Ride-Hailing-via-Federated-Learning-to-Dispatch"><a href="#Fed-LTD-Towards-Cross-Platform-Ride-Hailing-via-Federated-Learning-to-Dispatch" class="headerlink" title="Fed-LTD:Towards Cross-Platform Ride Hailing via Federated Learning to Dispatch"></a>Fed-LTD:Towards Cross-Platform Ride Hailing via Federated Learning to Dispatch</h3><p>派单效率受到数据隔离问题(data isolation problem)的影响，本文提出Fed-LTD框架，实现多平台在不共享本地数据的前提下协作派单，提供隐私保护的同时共享派单模型和决策。</p><p>挑战：</p><ol><li>如何最大化跨平台派单的总使用率——高效聚合本地派单决策(二分图)</li><li>如何在联合派单的情况下实现隐私保护和高效</li></ol><h4 id="问题建模"><a href="#问题建模" class="headerlink" title="问题建模"></a>问题建模</h4><p><em><strong>Drivers Set.</strong></em> 司机集合$U$，$u\in U$，$u.loc$ 表示司机的位置</p><p><em><strong>Orders Set.</strong></em> 订单集合$V$， $v\in V$，$v.origin,v.destination,v.reward$ 分别表示订单的出发地、目的地和订单价格</p><p>在二分图 $G&#x3D;(U\cup V,E)$ 中，边$e&#x3D;(e,v)$ 的权重 $w(u,v)&#x3D;v.reward$，当$u.loc$ 和 $v.origin$ 之间的距离超过一定的阈值$R$ 后，对应的边会被剪枝</p><p><em><strong>Matching Allocation.</strong></em> $\mathcal{M}$ 表示一个对二分图  $G&#x3D;(U\cup V,E)$ 的派单策略，$(u,v)$ 满足 $u\in U,v\in V$且$u$ 和$v$都只在$\mathcal{M}$中出现过一次，通过计算派单策略 $\mathcal{M}$下的边权和定义使用率函数(utility function)<br>$$<br>SUM(\mathcal{M}(G))&#x3D;\sum_{(u,v)\in \mathcal{M}}w(u,v)<br>$$<br><em><strong>Order Dispatching Problem.</strong></em> 给定batch序列 $&lt;1,2,…,T&gt;$ ， $t$ 的上一个batch就抵达的订单和司机可以构建当前的二分图 $G^{(t)}$，目标是找到最佳分配策略 $\mathcal {M}^{(t)}$ 使得所有batch的使用率和最高<br>$$<br>max\sum_{t&#x3D;1}^TSUM(\mathcal {M}^{(t)}(G^{(t)}))<br>$$<br>有 $K$ 个平台$P_1,P_2,…,P_K$和一个服务器 $S$，每个平台 $P_k$ 有一个本地二分图 $G_K&#x3D;(U_k\cup V_k,E_k)$，里面的节点对应该平台的司机和订单</p><p><em><strong>Global Optimum.</strong></em> $G$ 为全局二分图，全局最优 $\mu(G)$ 可以理解为在非联邦设置下的最优匹配结果<br>$$<br>\mu(G)&#x3D;\mathop{max}<em>{&lt;\mathcal{M}^{(t)}&gt;}\sum</em>{t&#x3D;1}^TSUM(\mathcal {M}^{(t)}(G^{(t)}))<br>$$<br><em><strong>Summation of Local Optimum.</strong></em> $\mu(G_{LS})$ 是本地所有二分图的联合<br>$$<br>\mu(G_{LS})&#x3D;\sum_{k&#x3D;1}^K\mu(G_k)<br>$$<br>每个平台的信息共享策略可以被定义为一个子图序列，$K$ 个平台即 $&lt;\mathcal{G}_1,…,\mathcal{G}_K&gt;$ ，其中$\mathcal {G}&#x3D;\cup _{k&#x3D;1}^K\mathcal{G}_k$，对于全局最优，$\mathcal{G}_k&#x3D;G_k$，对于本地最优的和，$\mathcal{G}_k&#x3D;\mathbb {0}$</p><p><em><strong>Federated Order Dispatching Problem(FOD).</strong></em>  要找到$G_{Fed}&#x3D;G_{LS}\cup \mathcal{G}$ 的信息共享策略 $&lt;\mathcal{G}<em>1,…,\mathcal{G}_K&gt;$ 使得<br>$$<br>\mu(G</em>{Fed})-\mu(G_{LS})&gt;\Delta<br>$$<br>目标是使得 $\Delta$ 尽可能大，在满足隐私限制的前提下，使联合订单分配达到与全局最优相似的表现</p><h4 id="算法介绍"><a href="#算法介绍" class="headerlink" title="算法介绍"></a>算法介绍</h4><p><strong><u>本地学习和派单(Local learning and dispatching)</u></strong></p><p>将司机作为agents，司机的地理位置(六边形网格表示)作为states，接单或保持空闲作为actions，价值函数是从某个状态得到的期望累积奖励，即 $\mathcal{V}(s^{(t)})&#x3D;\mathbb{E}[\sum_tr^{(t)}|s^{(t)}]$，其中$s^{(t)}、r^{(t)}$分别表示batch t内的状态向量和奖励和，价值函数的更新遵循贝尔曼方程，其中，$\alpha_l、\gamma$ 分别表示学习率和折扣因子。<br>$$<br>\mathcal{V}(𝑠^{(t)})\leftarrow\mathcal{V}(𝑠^{(t)})+\alpha_𝑙·\sum_u(r_u^{(t)}+\gamma\mathcal{V}(s_v^{(t+1)})-\mathcal{V}(s_u^{(t)}))<br>$$<br>每个平台根据已学到的价值做分单决策。将未来奖励的期望通过时间差分误差(TD error)编码为二分图的边权重<br>$$<br>w(u,v)&#x3D;v.reward+\gamma\mathcal{V}(s_v^{(t+1)})-\mathcal{V}(s_u^{(t)})<br>$$</p><p>重建二分图后，采用基于匈牙利方法的二分图最大匹配做本地分配决策。每个平台可以独立地在本地运行，服务器将所有平台的奖励和相加作为baseline(本实验中即LocalSum)</p><p><strong><u>分配模型聚合(Aggregation of Dispatching Models)</u></strong></p><p><strong>随机掩码下的隐私聚合——针对聚合期间的隐私泄露</strong></p><p>采用随机掩码(random masking)模糊已升级的网格状态来保护值更新的隐私，$\Delta \mathcal{V}<em>k$ 是平台 $k$ 更新后的价值表，通过下面的掩码方法实现扰乱$\Delta \mathcal{V}<em>k$ 的值<br>$$<br>\Delta\tilde{\mathcal{V}<em>k}&#x3D;\Delta\mathcal{V}<em>k+\sum</em>{k’&lt;k}PRG(sd</em>{k,k’})-\sum</em>{k’&lt;k}PRG(sd</em>{k’,k})<br>$$<br>$PRG(·)$是一个伪随机生成器，$sd_{k,k’}$是一个由平台$k,k’$ 通过密钥协商算法(key agreement algorithm)生成的随机种子。如下图所示，没有随机掩码的情况下更容易被推断哪个网格被更新了，而随机掩码后敏感信息就难以推断了。</p><p>![](..&#x2F;img&#x2F;random masking.png)</p><p><strong>推迟同步——针对服务器和各平台之间的高通讯代价</strong></p><p>服务器从每个batch同步一次推迟至每 $t_d$ 个batches进行一次值同步，将通讯代价减少了$1&#x2F;t_d$</p><p><strong><u>分配决策聚合(Aggregation of Dispatching Decisions)</u></strong></p><p><strong>重建全局二分图</strong></p><p>设计基于局部敏感哈希(Locality Sensitive Hashing, LSH)的方法平衡隐私和效率，在哈希后依旧保持了最近邻组合<br>$$<br>\text{If } dist(u,v)\le R,\text{  then }Pr[h(u)&#x3D;h(v)]\ge p_1\<br>\text{If } dist(u,v)\ge c·R,\text{  then }Pr[h(u)&#x3D;h(v)]\le p_2<br>$$<br>$dist(·,·)$ 表示欧几里得距离，$R$ 是连接性阈值(比如3km)， $h$ 是哈希函数</p><p>通过LSH编码，可以生成由 $\mathcal{K}$ 个哈希函数表示的一个节点 $v$ 的签名 $Sig(v)&#x3D;&lt;h_1(v),···，h_{\mathcal{K}}(v)&gt;$，再采用MD5编码哈希函数来保护LSH编码中的相关位置，加密后的签名为$SSig(v)&#x3D;MD5(Concat(h(v))$，种子 $Concat(h(v))$是 $\mathcal{K}$ 个二元哈希编码的拼接。编码算法生成要共享的节点的加密签名，服务器通过解码重建二分图。</p><p><strong>差分隐私混淆边权</strong></p><p>恢复全局二分图结构后，需要计算由强化学习生成的边权。$v.origin$ 和 $u.loc$ 相近，根据价值函数的连续性，有 $\mathcal{V}(v.origin)\approx\mathcal{V}(u.loc)$，那么权重的计算公式可以重写为如下只与订单 $v$ 有关的公式<br>$$<br>w(u,v)\approx v.reward+\gamma\mathcal{V}(v.destination)-\mathcal{V}(v.origin)<br>$$<br>采用差分隐私来扰动 $w(u,v)$，服务器就难以通过网格值推断订单和司机的位置。将Laplace噪声加入到边权计算中，敏感度可以通过 $\Delta <em>{\mathcal{V}}&#x3D;\gamma\mathcal{V}</em>{max}-\mathcal{V}<em>{min}-(\gamma\mathcal{V}</em>{min}-\mathcal{V}<em>{max})&#x3D;(1+\gamma)diam(\mathcal{V})$ 计算，其中$diam(\mathcal{V})&#x3D;\mathcal{V}</em>{max}-\mathcal{V}_{min}$，那么扰动可以写为<br>$$<br>\tilde{w}(v)&#x3D;w(u,v)+Lap(\frac{(1+\gamma)diam(\mathcal{V})}{\epsilon_p})<br>$$<br>其中，$\epsilon_p$ 为隐私预算(privacy budget)。假设 $v$ 和 $v’$ 为两个有同样奖励但任意的起点和目的地，根据Laplace机制，有<br>$$<br>\frac{Pr[\tilde{w}(v)&#x3D;w]}{Pr[\tilde{w}(v’)&#x3D;w]}\le exp(\frac{\epsilon_p}{(1+\gamma)diam(\mathcal{V})}|w(v)-w(v’)|)\le e^{\epsilon_p}<br>$$<br>该公式表示在扰动后难以区分两个订单($v$ 和 $v’$)，服务器难以从边权推断该条边属于哪个订单。每个平台上传经干扰后的边权。最后服务器用贪心算法实现全局匹配，每个平台的司机都可以得到额外的来自其他平台的订单。</p><h4 id="算法流程"><a href="#算法流程" class="headerlink" title="算法流程"></a>算法流程</h4><p><img src="/../img/framework.png"></p><ol><li><p>本地学习和派单：每个平台本地学习一个价值函数并基于价值函数做分单决策</p></li><li><p>聚合分配模型：将联邦学习用于聚合分配模型，同时考虑到隐私保护和效率优化</p></li><li><p>聚合分配决策：通过聚合本地的残差二分图(每个平台未匹配的节点)共享分配决策</p></li></ol>]]></content>
+    
+    
+    <categories>
+      
+      <category>论文笔记</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Reinforcement Learning</tag>
+      
+      <tag>Order Dispatch</tag>
+      
+      <tag>Federated Learning</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>【Note】LTA</title>
+    <link href="/2023/04/01/LTA/"/>
+    <url>/2023/04/01/LTA/</url>
+    
+    <content type="html"><![CDATA[<h3 id="Learning-to-Assign-Towards-Fair-Task-Assignment-in-Large-Scale-Ride-Hailing"><a href="#Learning-to-Assign-Towards-Fair-Task-Assignment-in-Large-Scale-Ride-Hailing" class="headerlink" title="Learning to Assign:Towards Fair Task Assignment in Large-Scale Ride Hailing"></a>Learning to Assign:Towards Fair Task Assignment in Large-Scale Ride Hailing</h3><p>采用强化学习全面地分配任务，并提出一些加速技巧实现对大规模数据的快速公平的分配。</p><p>从司机视角考虑，不公平的分配策略影响司机的感受(the fairness of earnings among drivers)</p><p>挑战：</p><ol><li>在线设置online setting：高维的时空依赖和变化</li><li>双目标优化bi-objective optimization：在变化的实际限制下同时优化司机的使用率和公平性</li><li>高效率要求high efficiency requirement：市区数据的快速任务分配</li></ol><p>现有的方法的问题：短视，忽略了当前任务分配对未来的影响，缩减了优化空间且降低了利用率和公平性；依赖线性规划或需要多重再分配，在大规模数据上的处理实时响应时效率低下。</p><p>衡量指标：</p><p>使用率utility——所有司机的收入总和</p><p>公平性fairness——一定时间内司机收入的公平性</p><p>本文提出的方法中，通过强化学习学习未来感知的任务策略，将使用率和公平性嵌入到同一个增强操作，并利用二分图的稀疏性实现加速；还提出了一个带权的分期偿还的公平性矩阵来刻画更精细时间粒度下司机收入的公平性。</p><h4 id="问题建模"><a href="#问题建模" class="headerlink" title="问题建模"></a>问题建模</h4><p>将时间 $T$分为多个batch $t$ ，$W$ 和 $R$ 分别表示在 $T$ 内的司机集合和需求集合</p><p><em><strong>Request.</strong></em> 一个订单需求$r\in R$ 用元组$&lt;o_r,d_r.p_r,\tau _r&gt;$ 表示，其中 $o_r,d_r.p_r,\tau _r$分别表示需求 $r$ 的出发地、目的地、价格和持续时间</p><p><em><strong>Driver.</strong></em> 一个出租车司机 $w\in W$ 用元组 $&lt;l_w^{(t)},u_w^{(t)},a_w^{(t)}&gt;$ 表示，其中$l_w^{(t)},u_w^{(t)},a_w^{(t)}$分别表示在 $t$ 内司机 $w$ 的当前位置、收入和状态。$a_w^{(t)}$为0表示司机处于inactive状态(比如不在线)，为1表示司机处于active状态(正在服务一个需求或空闲)，假设一个batch内司机的 $a_w^{(t)}$不变；若司机在 $t$ 内处于空闲状态，则收入为零，即 $u_w^{(t)}&#x3D;0$，若在 $t$ 内服务一个需求，则收入为 $u_w^{(t)}&#x3D;p_r&#x2F;\tau _r$</p><p>P.S. 本文考虑到更真实的司机设置依赖，即未来的司机分布会受当前batch内的司机分布和任务分配影响</p><p><em><strong>Bipartite Graph.</strong></em> 候选任务集用二分图 $G^{(t)}&#x3D;&lt;R^{(t)},W^{(t)},E^{(t)}&gt;$表示，其中$R^{(t)},W^{(t)}$分别表示 $t$ 内待分配的订单和空闲司机。若需求 $r$ 被分配给司机 $w$，那么就有一条权重为 $\theta _{r,w}$的边 $(r,w)\in E^{(t)}$ 连接需求 $r$ 和司机 $w$</p><p>另外，需要设置距离上限，当需求-司机的距离小于该阈值时才存在连接两者的边，同时给每条边$(r,w)$设置一个投影率$\lambda_{r,w}$ 表示其他用户体验相关的因素。距离阈值和投影率均由平台给出，权重$\theta_{r,w}$ 初始化为需求 $r$ 的价格 $p_r$</p><p><em><strong>Total Utility.</strong></em> 给定可重用司机集合 $W$和动态出现的需求集合 $R$，总使用率通过所有司机在总时间 $T$ 内的期望累积收入总和来表示。最大化 $U$ 来优化所有司机的总收入<br>$$<br>U&#x3D;\sum_{w\in W}\mathbb {E}[\sum_{t\in T}u_w^{(t)}]<br>$$<br>$M$ 表示一个有利于优化总使用率和收入公平性的匹配策略。司机 $w$ 的期望累积收入$\mathbb {E}[\sum_{t\in T}u_w^{(t)}]$由匹配结果来决定<br>$$<br>\mathbb {E}[\sum_{t\in T}u_w^{(t)}]&#x3D;\sum_{t\in T}\sum_{(r,w)\in M^{(t)}}(1-\lambda_{w,r})·p_r<br>$$<br><em><strong>Weighted Amortized Fairness.</strong></em> $F_w$ 是司机 $w$ 在加权活跃时间内带权分摊的公平性，其中 $\xi^{(t)}$ 是用于标准化一天内不同时间段潜在收入方差的权重<br>$$<br>F_w&#x3D; \frac {\sum_{t\in T} u_w^{(t)}&#x2F;\xi^{(t)}}{\sum_{t\in T}a_w^{(t)}}<br>$$<br><em><strong>Temporal Earnings Fairness.</strong></em>  收入公平性由带权分摊公平度的熵变量来衡量. 大的 $F$ 表示司机间更为分散的带权分摊公平度，比如不公平的收入分配，所以目标是最小化 $F$<br>$$<br>F&#x3D;-\sum_{w\in W}log(\frac{F_w}{max_{w\in W’}F_{w’}})<br>$$</p><h4 id="算法介绍"><a href="#算法介绍" class="headerlink" title="算法介绍"></a>算法介绍</h4><p><strong><u>基于学习的Re-weighting</u></strong></p><p><strong>线上学习公式化</strong></p><p>司机 $w$ 在状态$(l_w^{(t)},t)$ 下遵循策略 $\pi$ 的价值函数$V_w^{\pi}(l_w^{(t)},t)$ ，通过奖励(rewards)迭代更新价值函数<br>$$<br>V_w^{\pi}(l_w^{(t)},t)\leftarrow V_w^{\pi}(l_w^{(t)},t)+\beta·\Delta_w(\forall w\in W)<br>$$<br>$\beta$是学习率，$\Delta_w$ 的定义如下<br>$$<br>\Delta_W&#x3D;<br>\begin{cases}<br>&amp; p_r+V_w^{\pi}(d_r,t+\tau_r)-V_w^{\pi}(l_w,t)\quad \text{if w gets r}\<br>&amp; 0 \quad \text{if w is idle}<br>\end{cases}<br>$$<br><strong>减少状态数量</strong></p><p>初始状态数可以表示为 $N_S \times N_T$ ，空间状态数乘时间状态数，通过以下两种方式减少状态(states)数量：</p><p>· 空间价值函数估计。将时空状态空间中的原始价值函数估计为仅考虑空间状态的形式，举例，$V_w(d_r,t+\tau _r)&#x3D;V_w(d_r,t)$ 忽略了短暂时间内的状态变化(订单时间一般较短，可以假设不变). 折扣因子 $\gamma $ 用于修正对长持续时间的需求的估计的不准确性.  状态数变化：$N_T ·N_S \rightarrow N_T$<br>$$<br>\Delta_W&#x3D;<br>\begin{cases}<br>&amp; p_r+\gamma ^{\tau <em>r}V_w(d_r,t)-V_w(l_w)\quad \text{if w gets r} \<br>&amp; 0 \quad \text{if w is idle} \end{cases}<br>$$<br>· Agents间的信息共享。 采用合并了所有Agents的价值函数的共享价值函数，更新公式可简化为<br>$$<br>V(l)\leftarrow V(l)+\beta’·\sum</em>{w:l_w^{(t)}\in l}\Delta_w<br>$$<br>其中 $\beta’$ 是标准化后的学习率，$l$ 表示价值函数所有可能的位置</p><p><strong>适应不同市区布局</strong></p><p>将位置离散化为两层结构并分别平滑不同层的价值函数. 将城市分为六边形&#x2F;四边形，有多个方向的六边形适合不规则的城市布局，与经纬度平行的四边形适合用于规则区域。按以下方式平滑价值函数<br>$$<br>V(l)&#x3D;\frac{1}{|DIR_H|+|DIR_S|}(\sum_{x\in DIR_H}H(l+x)+\sum_{x\in DIR_S}S(l+x))<br>$$<br>其中 $S$ 和 $H$ 分别表示六边形和四边形的价值函数，$DIR_H$ 和 $DIR_S$ 明确了两层中平滑指向的偏移量.</p><p><strong>避免线上学习的冷启动</strong></p><p>(Guding) 价值函数初始化为0，导致初始的batch中的任务分配难以考虑到未来情况，需要引导司机提前到合适的区域避免冷启动</p><p><strong><u>双目标任务分配</u></strong></p><p><strong>公平度提升</strong></p><p>(Guiding)直接将公平性检查嵌入最大化总使用率的过程。采用KM算法，先找到一条包含连接和未连接的边的道路，若未连接的边权重大于已连接的边的权重，交换两条边提升总使用率；当搜索一条增广路时，检查司机未来的收入率并拒绝有较大收入率方差的增强；为减少检查量和时间消耗，只检查邻接的两个司机间的增强道路。</p><p><strong>加速</strong></p><p>(Assigning)采用宽度优先搜索(BFS)，将二分图分成多个部分，每个部分可能只有一个司机&#x2F;需求。</p><h4 id="算法流程"><a href="#算法流程" class="headerlink" title="算法流程"></a>算法流程</h4><p><img src="/../img/Workflow.png" alt="Workflow"></p><p>首先re-weighting模块结合跨任务的时间依赖精细化给定二分图的边权重，然后双目标任务模块通过公平性增强和其他加速策略找到分配策略，最后基于学习的re-weighting模块再基于分配结果更新权重，并在某些情况下指引空闲司机到指定区域。</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>论文笔记</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Reinforcement Learning</tag>
+      
+      <tag>Order Dispatch</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>【Note】Large-Scale Order Dispatch</title>
+    <link href="/2023/04/01/Large-Scale%20Order%20Dispatch%20in%20On-Demand%20Ride-Hailing%20Platforms%20A%20Learning%20and%20Planning%20Approach/"/>
+    <url>/2023/04/01/Large-Scale%20Order%20Dispatch%20in%20On-Demand%20Ride-Hailing%20Platforms%20A%20Learning%20and%20Planning%20Approach/</url>
+    
+    <content type="html"><![CDATA[<h3 id="Large-Scale-Order-Dispatch-in-On-Demand-Ride-Hailing-Platforms-A-Learning-and-Planning-Approach"><a href="#Large-Scale-Order-Dispatch-in-On-Demand-Ride-Hailing-Platforms-A-Learning-and-Planning-Approach" class="headerlink" title="Large-Scale Order Dispatch in On-Demand Ride-Hailing Platforms A Learning and Planning Approach"></a>Large-Scale Order Dispatch in On-Demand Ride-Hailing Platforms A Learning and Planning Approach</h3><p>将强化学习算法应用于分单，使得系统可以更加关注整个全局的最优化，并且克服现有分单算法中存在的“短视”现象，寻求更大时间尺度上的最优。</p><p>将订单调度建模为一个大规模序列决策问题，每个独立的匹配决策基于两个因素：根据实时信息得到的司机服务这一单得到的即时奖励＋一个表征该决策对未来影响的额外因素。</p><p>分单：对于较短一个时间片$t$ ，有 $m$个待分配订单， $n$ 个空闲司机，按照某种原则，将待分配订单分配给空闲司机。分单的目标是最大化成交总额(GrossMerchandise Volume,GMV)。</p><h4 id="问题建模"><a href="#问题建模" class="headerlink" title="问题建模"></a>问题建模</h4><p>将Markov Decision Process(MDP)用于建模序列决策问题：</p><p>目标：最大化收益gain $G_t &#x3D; \Sigma <em>{i&#x3D;t}^T  R</em>{t+1}$</p><p>方法：学习价值函数 state-value function $V_{\pi}(s)&#x3D;\mathbb E_{\pi}[G_t|s_t&#x3D;s]$ 和 action-value function $Q_{\pi}(s,a)&#x3D;\mathbb E_{\pi}[G_t|s_t&#x3D;s,a_t&#x3D;a]$</p><p>MDP定义：</p><p>把每个独立的司机建模为一个agent，有利于简化其他定义。</p><p><em><strong>State</strong></em>. 把所有时间 $T$ 和所有区域 $G$ 进行离散化，司机的状态可以定义为表征时空状态的二维向量$s&#x3D;(t,g)\in S, t\in T,g\in G$, 所有状态集就是时间和空间的笛卡尔积 $|S|&#x3D;|T|\times |G|$ </p><p><em><strong>Action</strong></em>. 一是服务行为(serving action)，指定司机去服务一个特定的订单，完成后得到订单的奖励；二是闲置行为(idle action)，在该时间片内匹配不到任何订单，这一action会导致自动转换到下一轮分单且该轮分单奖励为0。</p><p><em><strong>Reward.</strong></em> 考虑到预估价格和预计到达时间的不确定性，加入了折扣系数，即时奖励表示为$R_\gamma&#x3D;\sum_{t&#x3D;0}^{T-1}\gamma^t \frac RT$. </p><p>举例，预估$30的订单，10min在接乘客，20min行驶，从A送到B，以10min为一个时间片  ，状态转移表示为$s&#x3D;(0,A)\rightarrow s’&#x3D;(3,B)$，折扣系数$\gamma&#x3D;0.9$，那么最终的奖励为 $R&#x2F;T&#x3D;30&#x2F;3&#x3D;10,  r&#x3D;10+10<em>0.9+10</em>0.9^2&#x3D;27.1$</p><p><em><strong>State transition.</strong></em> 状态转移伴随行为发生,Temporal Difference(TD)更新规则如下：</p><p>对于idle action的司机:</p><p>$V(s)\leftarrow V(s)+\alpha[0+\gamma V(s’)-V(s)], s&#x3D;(t,g)\rightarrow s’&#x3D;(t+1,g)$，时间片加一，地区不变；</p><p>对于serving action的司机:</p><p>$V(s)\leftarrow V(s)+\alpha[R_\gamma +\gamma^{\Delta t}V(s’’)-V(s)],s&#x3D;(t,g)\rightarrow s’&#x3D;(t+\Delta t,g_{dest})$</p><h4 id="算法介绍"><a href="#算法介绍" class="headerlink" title="算法介绍"></a>算法介绍</h4><p>实时订单分配算法<br>$$<br>\mathop{argmax}\limits_{a_{ij}} \sum_{i&#x3D;0}^m \sum_{j&#x3D;0}^nQ_{\pi}(i,j)a_{ij}\<br>s.t. \space \space \sum_{i&#x3D;0}^ma_{ij}&#x3D;1, j&#x3D;1,2,3,…,n\<br>    \sum_{j&#x3D;0}^na_{ij}&#x3D;1, i&#x3D;1,2,3,…,m<br>$$<br>$Q_{\pi}(i,j)$表示将订单$j$分配给司机$i$预期增加的收益，$i&#x3D;0$表示空司机的特殊状态，$j&#x3D;0$表示空订单的特殊状态。</p><p>学习时空价值过程中也有时间片(状态的划分，状态由时间索引和空间索引组成)，这个时间片一般比较大(几分钟)，而分单时间片一般比较小(比如几秒)，这是为了保证分单的实时性。这就导致了对于该分单轮次，轮空的司机来说，其状态是不变的(时间索引和空间索引都不变)，也就是说其增益价值为空，所以分单算法应该保证尽量不让司机轮空。因此，可以去掉这两个特殊的状态，问题变为带边权的最大二分图匹配问题。该问题可以使用KM(Kuhn-Munkres)算法求解。</p><p>采用advantage function trick, 减去了$V(i)$连接到司机$i$的边。advatange function的计算方式为期待收益减去保持在原来状态的期待价值，删除了二分图中的大多数边，有利于更快的计算。<br>$$<br>\mathop{argmax}\limits_{a_{ij}} \sum_{i&#x3D;1}^m \sum_{j&#x3D;1}^nA_{\pi}(i,j)a_{ij}\<br>s.t.\quad \space \sum_{i&#x3D;1}^ma_{ij}\le1, j&#x3D;1,2,3,…,n\<br>    \sum_{j&#x3D;1}^na_{ij}\le1, i&#x3D;1,2,3,…,m\<br>    where\quad A_{\pi}(i,j)&#x3D;\gamma^{\Delta t_j}V(s’<em>{ij})-V(s_i)+R</em>{\gamma}(j)\quad is \space advantage\space funciton<br>$$<br>advantage function中主要考虑以下四个因素：</p><p><em><strong>Order price.</strong></em> 订单j的价格越高，相应的$R_{\gamma}(j)$也越高</p><p><em><strong>Drivers’ location.</strong></em> 未来更难接到订单(即当前价值低的司机，$V(s_i)$小)更容易接到订单，司机当前的状态对应advantage function中的负面影响$-V(s_i)$</p><p><em><strong>Order destination.</strong></em> 目的地为高价值区域的订单对应更高的$V(s’_{ij})$</p><p><em><strong>Pickup distance.</strong></em> 更远的接客距离会导致更晚的到达时间，增加了$\Delta t_j$，增大了折扣</p><h4 id="算法流程"><a href="#算法流程" class="headerlink" title="算法流程"></a>算法流程</h4><p>离线部分：</p><ol><li><p>收集历史数据中的订单信息，表示为强化学习中的四元组形式；</p></li><li><p>使用动态规划求解价值函数。将价值函数以查找表 (lookup table) 形式保存以供线上使用。</p></li></ol><p>线上部分：</p><ol><li><p>收集待分配的司机和订单列表;</p></li><li><p>计算每个司乘匹配对应的动作价值数 (State-Action Function)，并以此为权重建立二分图;</p></li><li><p>将上述匹配权值作为权重嵌入KM 算法，充分考虑接驾距离、服务分等因素，求解最优匹配，进入最终派单环节。</p></li></ol><p>迭代部分：</p><p>离线+线上，根据新积累的数据离线更新价值函数，和使用更新后的价值函数指导派单的过程。</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>论文笔记</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>Reinforcement Learning</tag>
+      
+      <tag>Order Dispatch</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>个人静态网页博客部署记录</title>
+    <link href="/2023/03/31/%E4%B8%AA%E4%BA%BA%E9%9D%99%E6%80%81%E7%BD%91%E9%A1%B5%E5%8D%9A%E5%AE%A2%E9%83%A8%E7%BD%B2%E8%AE%B0%E5%BD%95/"/>
+    <url>/2023/03/31/%E4%B8%AA%E4%BA%BA%E9%9D%99%E6%80%81%E7%BD%91%E9%A1%B5%E5%8D%9A%E5%AE%A2%E9%83%A8%E7%BD%B2%E8%AE%B0%E5%BD%95/</url>
+    
+    <content type="html"><![CDATA[<p>👀 写在最前，从来没想过会有什么时候自己会需要写前端，大一的时候采访一个15年就毕业的做前端的学长，从他的博客里感受到前端好像是个不那么受待见、在大众眼里没什么技术性、薪资不是很高但其实又很重要的岗位，后来上的课也是没有一门与前端相关的，于是对前端的了解大概也就止步于此了。之前倒是经常看着同专业的人秉持着兴趣在做网页，佩服别人的同时却没有一点儿自己要动手尝试的想法，但是现在，为了完成<a href="https://github.com/X-lab2017/oss101/issues/33">第四讲开源作业</a>，还是<del>迫不得已</del>上路了。</p><p>✨ 没想到的是，在了解SSG框架的过程中，一边欣赏别人的主题一边学习框架的基础命令一边自己点开各种前端文件看个究竟，慢慢地觉得前端好有意思，可以根据自己的审美去设计网站结构，记录自己想要记录的东西，对于我这样一个啰哩叭嗦的人来说，<strong>一个静态网页博客真的可以作为一片用于记录和分享所有包括学习、生活中各种事情的自留地💕</strong>，所以这次提交的网址不会是我的最终版本，这个网址在ddl之前是我的作业成果，在ddl之后就是属于我自己的blog啦~</p><p>📝 因为是完全从零开始，所以会每一步的尝试和问题都仔细记录，下面就是我的动手实践全记录了。</p><h2 id="实践步骤"><a href="#实践步骤" class="headerlink" title="实践步骤"></a>实践步骤</h2><h3 id="一、选择SSG框架"><a href="#一、选择SSG框架" class="headerlink" title="一、选择SSG框架"></a>一、选择SSG框架</h3><p>虽然助教建议先选择主题再选择框架，但在参考网上各类教程后我决定直接采用Hexo框架。由于之前没有接触过前端的内容，所以先学习了Hexo的基础操作，此处推荐Youtube上的Hexo教程<a href="https://youtu.be/A-muxF_6plc">Hexo-Static Site Generator</a> 以及官方文档<a href="https://hexo.io/docs/">Documentation | Hexo</a>。</p><p>下载安装 <a href="https://nodejs.org/en">Node.js</a> 和 <a href="https://git-scm.com/">Git</a> 后就可以通过在终端输入命令<code>$ npm install -g hexo-cli</code>安装Hexo，可以输入<code>hexo -v</code> 查看是否安装成功。</p><h3 id="二、选择主题"><a href="#二、选择主题" class="headerlink" title="二、选择主题"></a>二、选择主题</h3><p>在<a href="https://hexo.io/themes/">Themes | Hexo</a> 挑选喜欢的主题，在精挑细选后，我挑选了一款个人觉得还不错的主题(也就是很多人都在用的fluid)<a href="https://github.com/fluid-dev/hexo-theme-fluid">hexo-theme-fluid</a>，</p><p>通过<code>npm install --save hexo-theme-fluid</code>可以直接安装最新版本的fluid，新建<code>_cpmfoh.fluid.yml</code>文件，复制主题的<code>_config,yml</code>中的内容到该文件中并在博客目录中的<code>_config.yml</code> 中设置theme的值为fluid即可。</p><p>选择主题后就可以对网站进行个性化设计了~</p><h3 id="三、个性化设计"><a href="#三、个性化设计" class="headerlink" title="三、个性化设计"></a>三、个性化设计</h3><h4 id="创建关于页"><a href="#创建关于页" class="headerlink" title="创建关于页"></a>创建关于页</h4><p><code>hexo new page about </code>添加about页面，创建成功后修改 <code>/source/about/index.md</code>，添加 <code>layout</code> 属性。然后可以自定义头像、个性签名以及自我介绍，设置GitHub、Steam主页链接及微信二维码等。</p><h4 id="更改banner-x2F-slogan等"><a href="#更改banner-x2F-slogan等" class="headerlink" title="更改banner&#x2F;slogan等"></a>更改banner&#x2F;slogan等</h4><p>在<code>_config.fluid.yml</code>中修改banner的图片和slogan的文本内容，同时在相应文件夹上传需要显示的图片文件，实现个人内容的呈现。</p><h2 id="问题记录"><a href="#问题记录" class="headerlink" title="问题记录"></a>问题记录</h2><p>问题：<code>hexo server</code>时报错 <code>YAMLException: duplicated mapping key</code></p><p>解决方式：报错显示出现重复的键值对，发现在<code>_config.yml</code>中写了两次<code>theme: hexo-theme-fluid</code>，删除其中一行即可。</p><h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><p><a href="https://www.jianshu.com/p/189fd945f38f/">搭建个人博客-hexo+github详细完整步骤 - 简书 (jianshu.com)</a></p><p><a href="https://www.cnblogs.com/xrblog/p/11587356.html#:~:text=%E6%8C%91%E9%80%89%E5%96%9C%E6%AC%A2%E7%9A%84%E7%BD%91%E9%A1%B5%E4%B8%BB%E9%A2%98%201%20%E5%9C%A8%20Hexo%E4%B8%BB%E9%A2%98%20%E4%B8%AD%E9%80%89%E6%8B%A9%E6%88%91%E4%BB%AC%E5%96%9C%E6%AC%A2%E7%9A%84%E4%B8%BB%E9%A2%98%EF%BC%8C%E8%BF%99%E9%87%8C%E6%88%91%E9%80%89%E6%8B%A9%E7%9A%84%E6%98%AF%20Anatole%20%E4%B8%BB%E9%A2%98%E3%80%82%202,--save%20hexo-render-pug%20hexo-generator-archive%20hexo-generator-tag%20hexo-generator-index%20hexo-generator-category%20%EF%BC%8C%E5%AE%89%E8%A3%85%E5%92%8C%E9%85%8D%E7%BD%AE%E5%BF%85%E8%A6%81%E7%9A%84%E6%8F%92%E4%BB%B6%2C%E5%A4%A7%E6%A6%82%E4%B8%80%E5%88%86%E9%92%9F%E5%B7%A6%E5%8F%B3%E3%80%82%20%E6%9B%B4%E5%A4%9A%E9%A1%B9%E7%9B%AE">hexo教程（四）——更改hexo主题 - 月如霜 - 博客园 (cnblogs.com)</a></p><p><a href="https://hexo.fluid-dev.com/docs/guide/">配置指南 | Hexo Fluid 用户手册 (fluid-dev.com)</a></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>学习记录</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>SSG</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Hello World</title>
+    <link href="/2023/03/31/hello-world/"/>
+    <url>/2023/03/31/hello-world/</url>
+    
+    <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo new <span class="hljs-string">&quot;My New Post&quot;</span><br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo server<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo generate<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">$ hexo deploy<br></code></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>]]></content>
+    
+    
+    
+  </entry>
+  
+  
+  
+  
+</search>
