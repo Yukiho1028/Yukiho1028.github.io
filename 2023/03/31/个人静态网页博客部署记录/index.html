@@ -23,15 +23,19 @@
 <meta property="og:site_name" content="Yukiho&#39;s blog">
 <meta property="og:description" content="👀 写在最前，从来没想过会有什么时候自己会需要写前端，大一的时候采访一个15年就毕业的做前端的学长，从他的博客里感受到前端好像是个不那么受待见、在大众眼里没什么技术性、薪资不是很高但其实又很重要的岗位，后来上的课也是没有一门与前端相关的，于是对前端的了解大概也就止步于此了。之前倒是经常看着同专业的人秉持着兴趣在做网页，佩服别人的同时却没有一点儿自己要动手尝试的想法，但是现在，为了完成第四讲开源作">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/img/sticky_top.png">
+<meta property="og:image" content="http://example.com/img/statistics.png">
 <meta property="og:image" content="http://example.com/img/to_master.png">
 <meta property="og:image" content="http://example.com/img/master2main.png">
 <meta property="article:published_time" content="2023-03-31T15:34:20.106Z">
-<meta property="article:modified_time" content="2023-04-01T08:13:40.546Z">
+<meta property="article:modified_time" content="2023-04-01T12:49:29.606Z">
 <meta property="article:author" content="Yukiho">
 <meta property="article:tag" content="SSG">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="http://example.com/img/to_master.png">
+<meta name="twitter:image" content="http://example.com/img/sticky_top.png">
   
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
   
   
   <title>个人静态网页博客部署记录 - Yukiho&#39;s blog</title>
@@ -223,7 +227,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2.1k 字
+          2.4k 字
         
       </span>
     
@@ -234,7 +238,7 @@
         
         
         
-          18 分钟
+          20 分钟
         
       </span>
     
@@ -278,7 +282,7 @@
               <div class="markdown-body">
                 
                 <p>👀 写在最前，从来没想过会有什么时候自己会需要写前端，大一的时候采访一个15年就毕业的做前端的学长，从他的博客里感受到前端好像是个不那么受待见、在大众眼里没什么技术性、薪资不是很高但其实又很重要的岗位，后来上的课也是没有一门与前端相关的，于是对前端的了解大概也就止步于此了。之前倒是经常看着同专业的人秉持着兴趣在做网页，佩服别人的同时却没有一点儿自己要动手尝试的想法，但是现在，为了完成<a target="_blank" rel="noopener" href="https://github.com/X-lab2017/oss101/issues/33">第四讲开源作业</a>，还是<del>迫不得已</del>上路了。</p>
-<p>✨ 没想到的是，在了解SSG框架的过程中，一边欣赏别人的主题一边学习框架的基础命令一边自己点开各种前端文件看个究竟，慢慢地觉得前端好有意思，可以根据自己的审美去设计网站结构，记录自己想要记录的东西，对于我这样一个啰哩叭嗦的人来说，<strong>一个静态网页博客真的可以作为一片用于记录和分享所有包括学习、生活中各种事情的自留地💕</strong>，所以这次提交的网址不会是我的最终版本，这个网址在ddl之前是我的作业成果，在ddl之后就是属于我自己的blog啦~</p>
+<p>✨ 没想到的是，在了解SSG框架的过程中，一边欣赏别人的主题一边学习框架的基础命令一边自己点开各种前端文件看个究竟，慢慢地觉得前端好有意思，可以根据自己的审美去设计网站结构，记录自己想要记录的东西，对于我这样一个啰哩叭嗦的人来说，<strong>一个静态网页博客真的可以作为一片用于记录和分享所有包括学习、生活中各种事情的自留地🌷</strong>，所以这次提交的网址不会是我的最终版本，这个网址在ddl之前是我的作业成果，在ddl之后就是属于我自己的blog啦~</p>
 <p>📝 因为是完全从零开始，所以会每一步的尝试和问题都仔细记录，下面就是我的动手实践全记录了。</p>
 <h2 id="实践步骤"><a href="#实践步骤" class="headerlink" title="实践步骤"></a>实践步骤</h2><h3 id="一、选择SSG框架"><a href="#一、选择SSG框架" class="headerlink" title="一、选择SSG框架"></a>一、选择SSG框架</h3><p>虽然助教建议先选择主题再选择框架，但在参考网上各类教程后我决定直接采用Hexo框架。由于之前没有接触过前端的内容，所以先学习了Hexo的基础操作，此处推荐Youtube上的Hexo教程<a target="_blank" rel="noopener" href="https://youtu.be/A-muxF_6plc">Hexo-Static Site Generator</a> 以及官方文档<a target="_blank" rel="noopener" href="https://hexo.io/docs/">Documentation | Hexo</a>。</p>
 <p>下载安装 <a target="_blank" rel="noopener" href="https://nodejs.org/en">Node.js</a> 和 <a target="_blank" rel="noopener" href="https://git-scm.com/">Git</a> 后就可以通过在终端输入命令<code>$ npm install -g hexo-cli</code>安装Hexo，可以输入<code>hexo -v</code> 查看是否安装成功。</p>
@@ -288,7 +292,11 @@
 <h3 id="三、个性化设计"><a href="#三、个性化设计" class="headerlink" title="三、个性化设计"></a>三、个性化设计</h3><h4 id="创建关于页"><a href="#创建关于页" class="headerlink" title="创建关于页"></a>创建关于页</h4><p><code>hexo new page about </code>添加about页面，创建成功后修改 <code>/source/about/index.md</code>，添加 <code>layout</code> 属性。然后可以自定义头像、个性签名以及自我介绍，设置GitHub、Steam主页链接及微信二维码等。</p>
 <h4 id="更改banner-x2F-slogan-x2F-favicon等"><a href="#更改banner-x2F-slogan-x2F-favicon等" class="headerlink" title="更改banner&#x2F;slogan&#x2F;favicon等"></a>更改banner&#x2F;slogan&#x2F;favicon等</h4><p>在<code>_config.fluid.yml</code>中修改banner、favicon的图片和slogan的文本内容，同时在相应文件夹上传需要显示的图片文件，实现个人喜欢的风格呈现。</p>
 <h4 id="上传个人文件"><a href="#上传个人文件" class="headerlink" title="上传个人文件"></a>上传个人文件</h4><p>将想要上传的<code>md</code>文件放入<code>_posts</code>文件夹中，在<code>img</code>文件夹下放入相关的图片，设置文件的tag、categories等实现不同文档的归档和标签设置，便于查找相关文件。</p>
-<h3 id="四、部署网站"><a href="#四、部署网站" class="headerlink" title="四、部署网站"></a>四、部署网站</h3><p>根据相关的通过GitHub部署hexo静态网站的教程，实现网站从本地仓库上传到GitHub仓库。<br>首先将git与GitHub账号绑定，配置用户名和邮箱</p>
+<h3 id="四、增加功能"><a href="#四、增加功能" class="headerlink" title="四、增加功能"></a>四、增加功能</h3><h4 id="置顶博客"><a href="#置顶博客" class="headerlink" title="置顶博客"></a>置顶博客</h4><p>通过设置该页Front-matter中<code>sticky</code>的值将该部署记录置顶</p>
+<p><img src="/../img/sticky_top.png" srcset="/img/loading.gif" lazyload alt="sticky"></p>
+<h4 id="统计访问次数-x2F-浏览量"><a href="#统计访问次数-x2F-浏览量" class="headerlink" title="统计访问次数&#x2F;浏览量"></a>统计访问次数&#x2F;浏览量</h4><p>通过将<code>_config.fluid.yml</code>中的<code>footer</code>下<code>statistics</code>的<code>enable</code>值设为True，如下所示添加<code>pv_format</code>和<code>uv_format</code>两行实现访客数和访问量的统计。</p>
+<p><img src="/../img/statistics.png" srcset="/img/loading.gif" lazyload alt="statistics"></p>
+<h3 id="五、部署网站"><a href="#五、部署网站" class="headerlink" title="五、部署网站"></a>五、部署网站</h3><p>根据相关的通过GitHub部署hexo静态网站的教程，实现网站从本地仓库上传到GitHub仓库。<br>首先将git与GitHub账号绑定，配置用户名和邮箱</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">git config --global user.name &quot;Yukiho1028&quot;<br>git config --global user.email &quot;1479303796@qq.com&quot;<br></code></pre></td></tr></table></figure>
 
 <p>然后生成ssh密钥</p>
@@ -300,6 +308,12 @@
 <p>然后在命令行依次输入以下指令生成网站、预览网站、部署网站即可。</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">hexo g<br>hexo s<br>hexo d<br></code></pre></td></tr></table></figure>
 <p>然后就可以成功访问<a target="_blank" rel="noopener" href="https://yukiho1028.github.io/">我的blog</a>啦~</p>
+<h3 id="六、未来规划"><a href="#六、未来规划" class="headerlink" title="六、未来规划"></a>六、未来规划</h3><ol>
+<li><p>如果有朋友愿意的话，可以添加友链🔗。</p>
+</li>
+<li><p>由于所有的论文笔记都是由Typora编写的<code>md</code>文档迁移过来，与VSCode的<code>md</code>显示方式不一样，所以公式还需要另外花时间做调整。</p>
+</li>
+</ol>
 <h2 id="问题记录"><a href="#问题记录" class="headerlink" title="问题记录"></a>问题记录</h2><p>💭问题一：<code>hexo server</code>时报错 <code>YAMLException: duplicated mapping key</code></p>
 <p>解决方式：报错显示出现重复的键值对，发现在<code>_config.yml</code>中写了两次<code>theme: hexo-theme-fluid</code>，删除其中一行即可。</p>
 <p>💭问题二：在部署网站到github时出现所有内容都被提交到master分支而不是main的问题(下图所示)，网站未能正常显示。<br><img src="/../img/to_master.png" srcset="/img/loading.gif" lazyload alt="problem"><br>解决方式：发现问题在于参考的教程中写把branch的值设成<code>master</code>而应该要推送<code>main</code>,所以如下图所示更改branch的值为<code>main</code>，重新部署即可解决。</p>
@@ -516,6 +530,30 @@
     </div>
   
   
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
   
   
 </div>
@@ -661,6 +699,8 @@
   <script>Fluid.plugins.imageCaption();</script>
 
   <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
 
 
 
