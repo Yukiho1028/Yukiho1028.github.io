@@ -16,15 +16,15 @@
   <meta name="author" content="Yukiho">
   <meta name="keywords" content="">
   
-    <meta name="description" content="Large-Scale Order Dispatch in On-Demand Ride-Hailing Platforms A Learning and Planning Approach将强化学习算法应用于分单，使得系统可以更加关注整个全局的最优化，并且克服现有分单算法中存在的“短视”现象，寻求更大时间尺度上的最优。 将订单调度建模为一个大规模序列决策问题，每个独立的匹配决策基于两个因素：根据">
+    <meta name="description" content="Large-Scale Order Dispatch in On-Demand Ride-Hailing Platforms A Learning and Planning Approach 将强化学习算法应用于分单，使得系统可以更加关注整个全局的最优化，并且克服现有分单算法中存在的“短视”现象，寻求更大时间尺度上的最优。 将订单调度建模为一个大规模序列决策问题，每个独立的匹配决策基于两个">
 <meta property="og:type" content="article">
 <meta property="og:title" content="【Note】Large-Scale Order Dispatch">
 <meta property="og:url" content="http://example.com/2023/04/01/Large-Scale%20Order%20Dispatch%20in%20On-Demand%20Ride-Hailing%20Platforms%20A%20Learning%20and%20Planning%20Approach/index.html">
 <meta property="og:site_name" content="Yukiho&#39;s blog">
-<meta property="og:description" content="Large-Scale Order Dispatch in On-Demand Ride-Hailing Platforms A Learning and Planning Approach将强化学习算法应用于分单，使得系统可以更加关注整个全局的最优化，并且克服现有分单算法中存在的“短视”现象，寻求更大时间尺度上的最优。 将订单调度建模为一个大规模序列决策问题，每个独立的匹配决策基于两个因素：根据">
+<meta property="og:description" content="Large-Scale Order Dispatch in On-Demand Ride-Hailing Platforms A Learning and Planning Approach 将强化学习算法应用于分单，使得系统可以更加关注整个全局的最优化，并且克服现有分单算法中存在的“短视”现象，寻求更大时间尺度上的最优。 将订单调度建模为一个大规模序列决策问题，每个独立的匹配决策基于两个">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2023-04-01T02:58:53.057Z">
-<meta property="article:modified_time" content="2023-04-01T04:33:35.742Z">
+<meta property="article:modified_time" content="2023-04-03T05:45:02.309Z">
 <meta property="article:author" content="Yukiho">
 <meta property="article:tag" content="Reinforcement Learning">
 <meta property="article:tag" content="Order Dispatch">
@@ -223,7 +223,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2.9k 字
+          2.8k 字
         
       </span>
     
@@ -234,7 +234,7 @@
         
         
         
-          25 分钟
+          24 分钟
         
       </span>
     
@@ -285,45 +285,88 @@
             
               <div class="markdown-body">
                 
-                <h3 id="Large-Scale-Order-Dispatch-in-On-Demand-Ride-Hailing-Platforms-A-Learning-and-Planning-Approach"><a href="#Large-Scale-Order-Dispatch-in-On-Demand-Ride-Hailing-Platforms-A-Learning-and-Planning-Approach" class="headerlink" title="Large-Scale Order Dispatch in On-Demand Ride-Hailing Platforms A Learning and Planning Approach"></a>Large-Scale Order Dispatch in On-Demand Ride-Hailing Platforms A Learning and Planning Approach</h3><p>将强化学习算法应用于分单，使得系统可以更加关注整个全局的最优化，并且克服现有分单算法中存在的“短视”现象，寻求更大时间尺度上的最优。</p>
+                <h3 id="large-scale-order-dispatch-in-on-demand-ride-hailing-platforms-a-learning-and-planning-approach">Large-Scale
+Order Dispatch in On-Demand Ride-Hailing Platforms A Learning and
+Planning Approach</h3>
+<p>将强化学习算法应用于分单，使得系统可以更加关注整个全局的最优化，并且克服现有分单算法中存在的“短视”现象，寻求更大时间尺度上的最优。</p>
 <p>将订单调度建模为一个大规模序列决策问题，每个独立的匹配决策基于两个因素：根据实时信息得到的司机服务这一单得到的即时奖励＋一个表征该决策对未来影响的额外因素。</p>
-<p>分单：对于较短一个时间片$t$ ，有 $m$个待分配订单， $n$ 个空闲司机，按照某种原则，将待分配订单分配给空闲司机。分单的目标是最大化成交总额(GrossMerchandise Volume,GMV)。</p>
-<h4 id="问题建模"><a href="#问题建模" class="headerlink" title="问题建模"></a>问题建模</h4><p>将Markov Decision Process(MDP)用于建模序列决策问题：</p>
-<p>目标：最大化收益gain $G_t &#x3D; \Sigma <em>{i&#x3D;t}^T  R</em>{t+1}$</p>
-<p>方法：学习价值函数 state-value function $V_{\pi}(s)&#x3D;\mathbb E_{\pi}[G_t|s_t&#x3D;s]$ 和 action-value function $Q_{\pi}(s,a)&#x3D;\mathbb E_{\pi}[G_t|s_t&#x3D;s,a_t&#x3D;a]$</p>
+<p>分单：对于较短一个时间片<span class="math inline">\(t\)</span> ，有
+<span class="math inline">\(m\)</span>个待分配订单， <span class="math inline">\(n\)</span>
+个空闲司机，按照某种原则，将待分配订单分配给空闲司机。分单的目标是最大化成交总额(GrossMerchandise
+Volume,GMV)。</p>
+<h4 id="问题建模">问题建模</h4>
+<p>将Markov Decision Process(MDP)用于建模序列决策问题：</p>
+<p>目标：最大化收益gain <span class="math inline">\(G_t = \Sigma
+_{i=t}^T R_{t+1}\)</span></p>
+<p>方法：学习价值函数 state-value function <span class="math inline">\(V_{\pi}(s)=\mathbb E_{\pi}[G_t|s_t=s]\)</span> 和
+action-value function <span class="math inline">\(Q_{\pi}(s,a)=\mathbb
+E_{\pi}[G_t|s_t=s,a_t=a]\)</span></p>
 <p>MDP定义：</p>
 <p>把每个独立的司机建模为一个agent，有利于简化其他定义。</p>
-<p><em><strong>State</strong></em>. 把所有时间 $T$ 和所有区域 $G$ 进行离散化，司机的状态可以定义为表征时空状态的二维向量$s&#x3D;(t,g)\in S, t\in T,g\in G$, 所有状态集就是时间和空间的笛卡尔积 $|S|&#x3D;|T|\times |G|$ </p>
-<p><em><strong>Action</strong></em>. 一是服务行为(serving action)，指定司机去服务一个特定的订单，完成后得到订单的奖励；二是闲置行为(idle action)，在该时间片内匹配不到任何订单，这一action会导致自动转换到下一轮分单且该轮分单奖励为0。</p>
-<p><em><strong>Reward.</strong></em> 考虑到预估价格和预计到达时间的不确定性，加入了折扣系数，即时奖励表示为$R_\gamma&#x3D;\sum_{t&#x3D;0}^{T-1}\gamma^t \frac RT$. </p>
-<p>举例，预估$30的订单，10min在接乘客，20min行驶，从A送到B，以10min为一个时间片  ，状态转移表示为$s&#x3D;(0,A)\rightarrow s’&#x3D;(3,B)$，折扣系数$\gamma&#x3D;0.9$，那么最终的奖励为 $R&#x2F;T&#x3D;30&#x2F;3&#x3D;10,  r&#x3D;10+10<em>0.9+10</em>0.9^2&#x3D;27.1$</p>
-<p><em><strong>State transition.</strong></em> 状态转移伴随行为发生,Temporal Difference(TD)更新规则如下：</p>
+<p><strong><em>State</em></strong>. 把所有时间 <span class="math inline">\(T\)</span> 和所有区域 <span class="math inline">\(G\)</span>
+进行离散化，司机的状态可以定义为表征时空状态的二维向量<span class="math inline">\(s=(t,g)\in S, t\in T,g\in G\)</span>,
+所有状态集就是时间和空间的笛卡尔积 <span class="math inline">\(|S|=|T|\times |G|\)</span></p>
+<p><strong><em>Action</em></strong>. 一是服务行为(serving
+action)，指定司机去服务一个特定的订单，完成后得到订单的奖励；二是闲置行为(idle
+action)，在该时间片内匹配不到任何订单，这一action会导致自动转换到下一轮分单且该轮分单奖励为0。</p>
+<p><strong><em>Reward.</em></strong>
+考虑到预估价格和预计到达时间的不确定性，加入了折扣系数，即时奖励表示为<span class="math inline">\(R_\gamma=\sum_{t=0}^{T-1}\gamma^t \frac
+RT\)</span>.</p>
+<p>举例，预估$30的订单，10min在接乘客，20min行驶，从A送到B，以10min为一个时间片
+，状态转移表示为<span class="math inline">\(s=(0,A)\rightarrow
+s&#39;=(3,B)\)</span>，折扣系数<span class="math inline">\(\gamma=0.9\)</span>，那么最终的奖励为 <span class="math inline">\(R/T=30/3=10,
+r=10+10*0.9+10*0.9^2=27.1\)</span></p>
+<p><strong><em>State transition.</em></strong>
+状态转移伴随行为发生,Temporal Difference(TD)更新规则如下：</p>
 <p>对于idle action的司机:</p>
-<p>$V(s)\leftarrow V(s)+\alpha[0+\gamma V(s’)-V(s)], s&#x3D;(t,g)\rightarrow s’&#x3D;(t+1,g)$，时间片加一，地区不变；</p>
+<p><span class="math inline">\(V(s)\leftarrow V(s)+\alpha[0+\gamma
+V(s&#39;)-V(s)], s=(t,g)\rightarrow
+s&#39;=(t+1,g)\)</span>，时间片加一，地区不变；</p>
 <p>对于serving action的司机:</p>
-<p>$V(s)\leftarrow V(s)+\alpha[R_\gamma +\gamma^{\Delta t}V(s’’)-V(s)],s&#x3D;(t,g)\rightarrow s’&#x3D;(t+\Delta t,g_{dest})$</p>
-<h4 id="算法介绍"><a href="#算法介绍" class="headerlink" title="算法介绍"></a>算法介绍</h4><p>实时订单分配算法<br>$$<br>\mathop{argmax}\limits_{a_{ij}} \sum_{i&#x3D;0}^m \sum_{j&#x3D;0}^nQ_{\pi}(i,j)a_{ij}\<br>s.t. \space \space \sum_{i&#x3D;0}^ma_{ij}&#x3D;1, j&#x3D;1,2,3,…,n\<br>    \sum_{j&#x3D;0}^na_{ij}&#x3D;1, i&#x3D;1,2,3,…,m<br>$$<br>$Q_{\pi}(i,j)$表示将订单$j$分配给司机$i$预期增加的收益，$i&#x3D;0$表示空司机的特殊状态，$j&#x3D;0$表示空订单的特殊状态。</p>
+<p><span class="math inline">\(V(s)\leftarrow V(s)+\alpha[R_\gamma
++\gamma^{\Delta t}V(s&#39;&#39;)-V(s)],s=(t,g)\rightarrow
+s&#39;=(t+\Delta t,g_{dest})\)</span></p>
+<h4 id="算法介绍">算法介绍</h4>
+<p>实时订单分配算法 <span class="math display">\[
+\mathop{argmax}\limits_{a_{ij}} \sum_{i=0}^m
+\sum_{j=0}^nQ_{\pi}(i,j)a_{ij}\\
+s.t. \space \space \sum_{i=0}^ma_{ij}=1, j=1,2,3,...,n\\
+    \sum_{j=0}^na_{ij}=1, i=1,2,3,...,m
+\]</span> <span class="math inline">\(Q_{\pi}(i,j)\)</span>表示将订单<span class="math inline">\(j\)</span>分配给司机<span class="math inline">\(i\)</span>预期增加的收益，<span class="math inline">\(i=0\)</span>表示空司机的特殊状态，<span class="math inline">\(j=0\)</span>表示空订单的特殊状态。</p>
 <p>学习时空价值过程中也有时间片(状态的划分，状态由时间索引和空间索引组成)，这个时间片一般比较大(几分钟)，而分单时间片一般比较小(比如几秒)，这是为了保证分单的实时性。这就导致了对于该分单轮次，轮空的司机来说，其状态是不变的(时间索引和空间索引都不变)，也就是说其增益价值为空，所以分单算法应该保证尽量不让司机轮空。因此，可以去掉这两个特殊的状态，问题变为带边权的最大二分图匹配问题。该问题可以使用KM(Kuhn-Munkres)算法求解。</p>
-<p>采用advantage function trick, 减去了$V(i)$连接到司机$i$的边。advatange function的计算方式为期待收益减去保持在原来状态的期待价值，删除了二分图中的大多数边，有利于更快的计算。<br>$$<br>\mathop{argmax}\limits_{a_{ij}} \sum_{i&#x3D;1}^m \sum_{j&#x3D;1}^nA_{\pi}(i,j)a_{ij}\<br>s.t.\quad \space \sum_{i&#x3D;1}^ma_{ij}\le1, j&#x3D;1,2,3,…,n\<br>    \sum_{j&#x3D;1}^na_{ij}\le1, i&#x3D;1,2,3,…,m\<br>    where\quad A_{\pi}(i,j)&#x3D;\gamma^{\Delta t_j}V(s’<em>{ij})-V(s_i)+R</em>{\gamma}(j)\quad is \space advantage\space funciton<br>$$<br>advantage function中主要考虑以下四个因素：</p>
-<p><em><strong>Order price.</strong></em> 订单j的价格越高，相应的$R_{\gamma}(j)$也越高</p>
-<p><em><strong>Drivers’ location.</strong></em> 未来更难接到订单(即当前价值低的司机，$V(s_i)$小)更容易接到订单，司机当前的状态对应advantage function中的负面影响$-V(s_i)$</p>
-<p><em><strong>Order destination.</strong></em> 目的地为高价值区域的订单对应更高的$V(s’_{ij})$</p>
-<p><em><strong>Pickup distance.</strong></em> 更远的接客距离会导致更晚的到达时间，增加了$\Delta t_j$，增大了折扣</p>
-<h4 id="算法流程"><a href="#算法流程" class="headerlink" title="算法流程"></a>算法流程</h4><p>离线部分：</p>
-<ol>
-<li><p>收集历史数据中的订单信息，表示为强化学习中的四元组形式；</p>
-</li>
-<li><p>使用动态规划求解价值函数。将价值函数以查找表 (lookup table) 形式保存以供线上使用。</p>
-</li>
+<p>采用advantage function trick, 减去了<span class="math inline">\(V(i)\)</span>连接到司机<span class="math inline">\(i\)</span>的边。advatange
+function的计算方式为期待收益减去保持在原来状态的期待价值，删除了二分图中的大多数边，有利于更快的计算。
+<span class="math display">\[
+\mathop{argmax}\limits_{a_{ij}} \sum_{i=1}^m
+\sum_{j=1}^nA_{\pi}(i,j)a_{ij}\\
+s.t.\quad \space \sum_{i=1}^ma_{ij}\le1, j=1,2,3,...,n\\
+    \sum_{j=1}^na_{ij}\le1, i=1,2,3,...,m\\
+    where\quad A_{\pi}(i,j)=\gamma^{\Delta
+t_j}V(s&#39;_{ij})-V(s_i)+R_{\gamma}(j)\quad is \space advantage\space
+funciton
+\]</span> advantage function中主要考虑以下四个因素：</p>
+<p><strong><em>Order price.</em></strong> 订单j的价格越高，相应的<span class="math inline">\(R_{\gamma}(j)\)</span>也越高</p>
+<p><strong><em>Drivers' location.</em></strong>
+未来更难接到订单(即当前价值低的司机，<span class="math inline">\(V(s_i)\)</span>小)更容易接到订单，司机当前的状态对应advantage
+function中的负面影响<span class="math inline">\(-V(s_i)\)</span></p>
+<p><strong><em>Order destination.</em></strong>
+目的地为高价值区域的订单对应更高的<span class="math inline">\(V(s&#39;_{ij})\)</span></p>
+<p><strong><em>Pickup distance.</em></strong>
+更远的接客距离会导致更晚的到达时间，增加了<span class="math inline">\(\Delta t_j\)</span>，增大了折扣</p>
+<h4 id="算法流程">算法流程</h4>
+<p>离线部分：</p>
+<ol type="1">
+<li><p>收集历史数据中的订单信息，表示为强化学习中的四元组形式；</p></li>
+<li><p>使用动态规划求解价值函数。将价值函数以查找表 (lookup table)
+形式保存以供线上使用。</p></li>
 </ol>
 <p>线上部分：</p>
-<ol>
-<li><p>收集待分配的司机和订单列表;</p>
-</li>
-<li><p>计算每个司乘匹配对应的动作价值数 (State-Action Function)，并以此为权重建立二分图;</p>
-</li>
-<li><p>将上述匹配权值作为权重嵌入KM 算法，充分考虑接驾距离、服务分等因素，求解最优匹配，进入最终派单环节。</p>
-</li>
+<ol type="1">
+<li><p>收集待分配的司机和订单列表;</p></li>
+<li><p>计算每个司乘匹配对应的动作价值数 (State-Action
+Function)，并以此为权重建立二分图;</p></li>
+<li><p>将上述匹配权值作为权重嵌入KM
+算法，充分考虑接驾距离、服务分等因素，求解最优匹配，进入最终派单环节。</p></li>
 </ol>
 <p>迭代部分：</p>
 <p>离线+线上，根据新积累的数据离线更新价值函数，和使用更新后的价值函数指导派单的过程。</p>
@@ -487,6 +530,12 @@
 
 
   
+
+
+  
+  
+
+
 
 
 
@@ -704,6 +753,49 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 

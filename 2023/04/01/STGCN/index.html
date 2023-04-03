@@ -16,23 +16,23 @@
   <meta name="author" content="Yukiho">
   <meta name="keywords" content="">
   
-    <meta name="description" content="Spatio-Temporal Graph Convolutional Networks:A Deep Learning Framework for Traffic Forecasting在文中提出的图时空网络STGCN中，定义$v^t\in\R^n$为$n$个观测点在时间戳$t$时的观测向量，$\mathcal {G}_t&#x3D;(\mathcal {V}_t,\mathcal {E},W)">
+    <meta name="description" content="Spatio-Temporal Graph Convolutional Networks:A Deep Learning Framework for Traffic Forecasting 在文中提出的图时空网络STGCN中，定义\(v^t\in\R^n\)为\(n\)个观测点在时间戳\(t\)时的观测向量，\(\mathcal {G}_t&#x3D;(\mathcal {V}_t,\mathcal">
 <meta property="og:type" content="article">
 <meta property="og:title" content="【Note】STGCN">
 <meta property="og:url" content="http://example.com/2023/04/01/STGCN/index.html">
 <meta property="og:site_name" content="Yukiho&#39;s blog">
-<meta property="og:description" content="Spatio-Temporal Graph Convolutional Networks:A Deep Learning Framework for Traffic Forecasting在文中提出的图时空网络STGCN中，定义$v^t\in\R^n$为$n$个观测点在时间戳$t$时的观测向量，$\mathcal {G}_t&#x3D;(\mathcal {V}_t,\mathcal {E},W)">
+<meta property="og:description" content="Spatio-Temporal Graph Convolutional Networks:A Deep Learning Framework for Traffic Forecasting 在文中提出的图时空网络STGCN中，定义\(v^t\in\R^n\)为\(n\)个观测点在时间戳\(t\)时的观测向量，\(\mathcal {G}_t&#x3D;(\mathcal {V}_t,\mathcal">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://example.com/img/Temporal_Block.png">
-<meta property="og:image" content="http://example.com/img/ST_Conv_Block.png">
-<meta property="og:image" content="http://example.com/img/Output.png">
+<meta property="og:image" content="http://example.com/2023/04/01/STGCN/Temporal_Block.png">
+<meta property="og:image" content="http://example.com/2023/04/01/STGCN/ST_Conv_Block.png">
+<meta property="og:image" content="http://example.com/2023/04/01/STGCN/Output.png">
 <meta property="article:published_time" content="2023-04-01T03:14:02.137Z">
-<meta property="article:modified_time" content="2023-04-01T04:32:50.516Z">
+<meta property="article:modified_time" content="2023-04-03T06:59:55.280Z">
 <meta property="article:author" content="Yukiho">
 <meta property="article:tag" content="Traffic Forecasting">
 <meta property="article:tag" content="GCN">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="http://example.com/img/Temporal_Block.png">
+<meta name="twitter:image" content="http://example.com/2023/04/01/STGCN/Temporal_Block.png">
   
   
     <meta name="referrer" content="no-referrer-when-downgrade">
@@ -227,7 +227,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.7k 字
+          1.8k 字
         
       </span>
     
@@ -289,15 +289,34 @@
             
               <div class="markdown-body">
                 
-                <h3 id="Spatio-Temporal-Graph-Convolutional-Networks-A-Deep-Learning-Framework-for-Traffic-Forecasting"><a href="#Spatio-Temporal-Graph-Convolutional-Networks-A-Deep-Learning-Framework-for-Traffic-Forecasting" class="headerlink" title="Spatio-Temporal Graph Convolutional Networks:A Deep Learning Framework for Traffic Forecasting"></a>Spatio-Temporal Graph Convolutional Networks:A Deep Learning Framework for Traffic Forecasting</h3><p>在文中提出的图时空网络STGCN中，定义$v^t\in\R^n$为$n$个观测点在时间戳$t$时的观测向量，$\mathcal {G}_t&#x3D;(\mathcal {V}_t,\mathcal {E},W)$，$\mathcal {V}_t$表示顶点(观测点)的集合，$\mathcal {E}$表示边的集合，$W\in \R^{n\times n}$为$\mathcal {G}_t$的邻接权重矩阵。网络的输入为$M$个时间步的图的特征向量$X\in R^{M\times n\times C_i}$，$n$表示观测点的数量，$C_i$是数据的特征向量长度，在文中取1，接下来对模型整体架构展开介绍。</p>
-<p><strong>空域卷积</strong>在每个时间步的图上进行，输入$X\in R^{n\times C_i}$，用Chebyshev多项式近似与一阶近似后的图卷积公式，使得在卷积过程中不仅考虑邻居节点的状态，也考虑自身的状态，再对图卷积运算进行泛化。对于完整的时空图(即对应$M$个时间步)，其输入为$X\in\R^{M\times n\times C_i}$，输出为$Y\in \R^{M\times n\times C_o}$</p>
-<p><img src="/../img/Temporal_Block.png" srcset="/img/loading.gif" lazyload></p>
-<p>如上图所示，在最右侧的<strong>时域卷积块</strong>中，每个节点处的输入$X\in \R^{M\times C_i}$，沿着时间维度进行一维卷积，时间卷积探索$K_t$个输入的邻居每次将序列长度缩短$K_t-1$，那么每个有着$C_i$个通道的序列长度为$M$的节点的输入可以表示为$Y\in \R^{M\times C_i}$，卷积核 $\Gamma \in \R^{K_t\times C_i\times 2C}$再将$Y$映射为独立的输出元素$[P\ Q]\in \R^{(M-K_t+1)\times (2C_O)}$，分别通过$GLU$激活，<em>sigmoid</em>$ 门$$\sigma(Q)$控制着当前状态的哪个输入$P$与发现时间序列中的组成结构和动态变化相关，非线性门通过堆叠的时间层挖掘输入域。此外，在堆叠的时间卷积层中使用残差连接。同理，可以将卷积核应用于图中的$n$个节点，得到最后的输出$\mathcal{Y}\in \R^{(M-K_t+1)\times n\times C}$。时间门卷积的公式为$\Gamma *_\Tau Y&#x3D;P\odot \sigma(Q)\in \R^{(M-K_t+1)\times C_o}$。</p>
+                <h3 id="spatio-temporal-graph-convolutional-networksa-deep-learning-framework-for-traffic-forecasting">Spatio-Temporal
+Graph Convolutional Networks:A Deep Learning Framework for Traffic
+Forecasting</h3>
+<p>在文中提出的图时空网络STGCN中，定义<span class="math inline">\(v^t\in\R^n\)</span>为<span class="math inline">\(n\)</span>个观测点在时间戳<span class="math inline">\(t\)</span>时的观测向量，<span class="math inline">\(\mathcal {G}_t=(\mathcal {V}_t,\mathcal
+{E},W)\)</span>，<span class="math inline">\(\mathcal
+{V}_t\)</span>表示顶点(观测点)的集合，<span class="math inline">\(\mathcal {E}\)</span>表示边的集合，<span class="math inline">\(W\in \R^{n\times n}\)</span>为<span class="math inline">\(\mathcal
+{G}_t\)</span>的邻接权重矩阵。网络的输入为<span class="math inline">\(M\)</span>个时间步的图的特征向量<span class="math inline">\(X\in R^{M\times n\times C_i}\)</span>，<span class="math inline">\(n\)</span>表示观测点的数量，<span class="math inline">\(C_i\)</span>是数据的特征向量长度，在文中取1，接下来对模型整体架构展开介绍。</p>
+<p><strong>空域卷积</strong>在每个时间步的图上进行，输入<span class="math inline">\(X\in R^{n\times
+C_i}\)</span>，用Chebyshev多项式近似与一阶近似后的图卷积公式，使得在卷积过程中不仅考虑邻居节点的状态，也考虑自身的状态，再对图卷积运算进行泛化。对于完整的时空图(即对应<span class="math inline">\(M\)</span>个时间步)，其输入为<span class="math inline">\(X\in\R^{M\times n\times C_i}\)</span>，输出为<span class="math inline">\(Y\in \R^{M\times n\times C_o}\)</span></p>
+<p><img src="/2023/04/01/STGCN/Temporal_Block.png" srcset="/img/loading.gif" lazyload></p>
+<p>如上图所示，在最右侧的<strong>时域卷积块</strong>中，每个节点处的输入<span class="math inline">\(X\in \R^{M\times
+C_i}\)</span>，沿着时间维度进行一维卷积，时间卷积探索<span class="math inline">\(K_t\)</span>个输入的邻居每次将序列长度缩短<span class="math inline">\(K_t-1\)</span>，那么每个有着<span class="math inline">\(C_i\)</span>个通道的序列长度为<span class="math inline">\(M\)</span>的节点的输入可以表示为<span class="math inline">\(Y\in \R^{M\times C_i}\)</span>，卷积核 <span class="math inline">\(\Gamma \in \R^{K_t\times C_i\times
+2C}\)</span>再将<span class="math inline">\(Y\)</span>映射为独立的输出元素<span class="math inline">\([P\ Q]\in \R^{(M-K_t+1)\times
+(2C_O)}\)</span>，分别通过<span class="math inline">\(GLU\)</span>激活，<em>sigmoid</em>$ 门$<span class="math inline">\(\sigma(Q)\)</span>控制着当前状态的哪个输入<span class="math inline">\(P\)</span>与发现时间序列中的组成结构和动态变化相关，非线性门通过堆叠的时间层挖掘输入域。此外，在堆叠的时间卷积层中使用残差连接。同理，可以将卷积核应用于图中的<span class="math inline">\(n\)</span>个节点，得到最后的输出<span class="math inline">\(\mathcal{Y}\in \R^{(M-K_t+1)\times n\times
+C}\)</span>。时间门卷积的公式为<span class="math inline">\(\Gamma *_\Tau
+Y=P\odot \sigma(Q)\in \R^{(M-K_t+1)\times C_o}\)</span>。</p>
 <p>注：这里对映射输出为单独的P和Q两个元素的方法和原因还不太理解。</p>
-<p><img src="/../img/ST_Conv_Block.png" srcset="/img/loading.gif" lazyload></p>
-<p>如上图所示，中间的<strong>时空卷积块</strong>(ST-Conv Block)由两个时域卷积块和一个空域卷积块组成，时空卷积块的输入和输出均为3D张量，对于第 $l$个块，输入为$v^l\in \R^{M\times n\times C^l}$，输出为$v^{l+1}\in \R^{(M-2(K_t-1))\times n\times C^{l+1}}$，计算方式为$v^{l+1}&#x3D;\Gamma^l_1*_\mathcal {T}ReLU(\Theta^l*_\mathcal {G}(\Gamma^l_0*_\mathcal {T}v^l))$，其中$\Gamma^l_0$和$\Gamma^l_1$分别为时空块$l$内上面和下面的卷积核，$\Theta^l$是图卷积的谱内核。通过图卷积层对通道进行下缩放和上缩放，实现尺度压缩和特征压缩。</p>
-<p><img src="/../img/Output.png" srcset="/img/loading.gif" lazyload></p>
-<p>根据时域卷积块的一维卷积，每经过一个时空卷积块，数据在时间维度的长度减小$2(K_t-1)$，在叠加两个时空卷积块后，输出$Y\in\R^{(M-4(K_t-1))\times n\times C_o}$。输出层包括一个时间卷积层和一个全连接层，时间卷积层把第二个时空卷积块的输出映射为单步预测，得到输出$Z\in\R^{n\times c}$，全连接层通过在$c$个通道上应用线性变换计算$n$个节点在$t+1$时间点的预测值$\hat{v}&#x3D;Zw+b$，其中权重参数$w\in\R^c$。</p>
+<p><img src="/2023/04/01/STGCN/ST_Conv_Block.png" srcset="/img/loading.gif" lazyload></p>
+<p>如上图所示，中间的<strong>时空卷积块</strong>(ST-Conv
+Block)由两个时域卷积块和一个空域卷积块组成，时空卷积块的输入和输出均为3D张量，对于第
+<span class="math inline">\(l\)</span>个块，输入为<span class="math inline">\(v^l\in \R^{M\times n\times
+C^l}\)</span>，输出为<span class="math inline">\(v^{l+1}\in
+\R^{(M-2(K_t-1))\times n\times C^{l+1}}\)</span>，计算方式为<span class="math inline">\(v^{l+1}=\Gamma^l_1*_\mathcal
+{T}ReLU(\Theta^l*_\mathcal {G}(\Gamma^l_0*_\mathcal
+{T}v^l))\)</span>，其中<span class="math inline">\(\Gamma^l_0\)</span>和<span class="math inline">\(\Gamma^l_1\)</span>分别为时空块<span class="math inline">\(l\)</span>内上面和下面的卷积核，<span class="math inline">\(\Theta^l\)</span>是图卷积的谱内核。通过图卷积层对通道进行下缩放和上缩放，实现尺度压缩和特征压缩。</p>
+<p><img src="/2023/04/01/STGCN/Output.png" srcset="/img/loading.gif" lazyload></p>
+<p>根据时域卷积块的一维卷积，每经过一个时空卷积块，数据在时间维度的长度减小<span class="math inline">\(2(K_t-1)\)</span>，在叠加两个时空卷积块后，输出<span class="math inline">\(Y\in\R^{(M-4(K_t-1))\times n\times
+C_o}\)</span>。输出层包括一个时间卷积层和一个全连接层，时间卷积层把第二个时空卷积块的输出映射为单步预测，得到输出<span class="math inline">\(Z\in\R^{n\times c}\)</span>，全连接层通过在<span class="math inline">\(c\)</span>个通道上应用线性变换计算<span class="math inline">\(n\)</span>个节点在<span class="math inline">\(t+1\)</span>时间点的预测值<span class="math inline">\(\hat{v}=Zw+b\)</span>，其中权重参数<span class="math inline">\(w\in\R^c\)</span>。</p>
 
                 
               </div>
@@ -400,7 +419,7 @@
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2023/04/01/Fed-LTD%20Towards%20Cross-Platform%20Ride%20Hailing%20via%20Federated%20Learning%20to%20Dispatch/" title="【Note】Fed-LTD">
+                      <a href="/2023/04/01/Fed-LTD/" title="【Note】Fed-LTD">
                         <span class="hidden-mobile">【Note】Fed-LTD</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
@@ -458,6 +477,12 @@
 
 
   
+
+
+  
+  
+
+
 
 
 
@@ -675,6 +700,49 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 

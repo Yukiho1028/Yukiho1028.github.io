@@ -16,22 +16,23 @@
   <meta name="author" content="Yukiho">
   <meta name="keywords" content="">
   
-    <meta name="description" content="Fed-LTD:Towards Cross-Platform Ride Hailing via Federated Learning to Dispatch派单效率受到数据隔离问题(data isolation problem)的影响，本文提出Fed-LTD框架，实现多平台在不共享本地数据的前提下协作派单，提供隐私保护的同时共享派单模型和决策。 挑战：  如何最大化跨平台派单的总使用率——高效聚合">
+    <meta name="description" content="Fed-LTD:Towards Cross-Platform Ride Hailing via Federated Learning to Dispatch 派单效率受到数据隔离问题(data isolation problem)的影响，本文提出Fed-LTD框架，实现多平台在不共享本地数据的前提下协作派单，提供隐私保护的同时共享派单模型和决策。 挑战：  如何最大化跨平台派单的总使用">
 <meta property="og:type" content="article">
 <meta property="og:title" content="【Note】Fed-LTD">
-<meta property="og:url" content="http://example.com/2023/04/01/Fed-LTD%20Towards%20Cross-Platform%20Ride%20Hailing%20via%20Federated%20Learning%20to%20Dispatch/index.html">
+<meta property="og:url" content="http://example.com/2023/04/01/Fed-LTD/index.html">
 <meta property="og:site_name" content="Yukiho&#39;s blog">
-<meta property="og:description" content="Fed-LTD:Towards Cross-Platform Ride Hailing via Federated Learning to Dispatch派单效率受到数据隔离问题(data isolation problem)的影响，本文提出Fed-LTD框架，实现多平台在不共享本地数据的前提下协作派单，提供隐私保护的同时共享派单模型和决策。 挑战：  如何最大化跨平台派单的总使用率——高效聚合">
+<meta property="og:description" content="Fed-LTD:Towards Cross-Platform Ride Hailing via Federated Learning to Dispatch 派单效率受到数据隔离问题(data isolation problem)的影响，本文提出Fed-LTD框架，实现多平台在不共享本地数据的前提下协作派单，提供隐私保护的同时共享派单模型和决策。 挑战：  如何最大化跨平台派单的总使用">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://example.com/img/framework.png">
+<meta property="og:image" content="http://example.com/2023/04/01/Fed-LTD/random_masking.png">
+<meta property="og:image" content="http://example.com/2023/04/01/Fed-LTD/framework.png">
 <meta property="article:published_time" content="2023-04-01T03:05:29.391Z">
-<meta property="article:modified_time" content="2023-04-01T12:53:04.350Z">
+<meta property="article:modified_time" content="2023-04-03T06:57:52.291Z">
 <meta property="article:author" content="Yukiho">
 <meta property="article:tag" content="Reinforcement Learning">
 <meta property="article:tag" content="Order Dispatch">
 <meta property="article:tag" content="Federated Learning">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="http://example.com/img/framework.png">
+<meta name="twitter:image" content="http://example.com/2023/04/01/Fed-LTD/random_masking.png">
   
   
     <meta name="referrer" content="no-referrer-when-downgrade">
@@ -237,7 +238,7 @@
         
         
         
-          36 分钟
+          37 分钟
         
       </span>
     
@@ -288,41 +289,119 @@
             
               <div class="markdown-body">
                 
-                <h3 id="Fed-LTD-Towards-Cross-Platform-Ride-Hailing-via-Federated-Learning-to-Dispatch"><a href="#Fed-LTD-Towards-Cross-Platform-Ride-Hailing-via-Federated-Learning-to-Dispatch" class="headerlink" title="Fed-LTD:Towards Cross-Platform Ride Hailing via Federated Learning to Dispatch"></a>Fed-LTD:Towards Cross-Platform Ride Hailing via Federated Learning to Dispatch</h3><p>派单效率受到数据隔离问题(data isolation problem)的影响，本文提出Fed-LTD框架，实现多平台在不共享本地数据的前提下协作派单，提供隐私保护的同时共享派单模型和决策。</p>
+                <h3 id="fed-ltdtowards-cross-platform-ride-hailing-via-federated-learning-to-dispatch">Fed-LTD:Towards
+Cross-Platform Ride Hailing via Federated Learning to Dispatch</h3>
+<p>派单效率受到数据隔离问题(data isolation
+problem)的影响，本文提出Fed-LTD框架，实现多平台在不共享本地数据的前提下协作派单，提供隐私保护的同时共享派单模型和决策。</p>
 <p>挑战：</p>
-<ol>
+<ol type="1">
 <li>如何最大化跨平台派单的总使用率——高效聚合本地派单决策(二分图)</li>
 <li>如何在联合派单的情况下实现隐私保护和高效</li>
 </ol>
-<h4 id="问题建模"><a href="#问题建模" class="headerlink" title="问题建模"></a>问题建模</h4><p><em><strong>Drivers Set.</strong></em> 司机集合$U$，$u\in U$，$u.loc$ 表示司机的位置</p>
-<p><em><strong>Orders Set.</strong></em> 订单集合$V$， $v\in V$，$v.origin,v.destination,v.reward$ 分别表示订单的出发地、目的地和订单价格</p>
-<p>在二分图 $G&#x3D;(U\cup V,E)$ 中，边$e&#x3D;(e,v)$ 的权重 $w(u,v)&#x3D;v.reward$，当$u.loc$ 和 $v.origin$ 之间的距离超过一定的阈值$R$ 后，对应的边会被剪枝</p>
-<p><em><strong>Matching Allocation.</strong></em> $\mathcal{M}$ 表示一个对二分图  $G&#x3D;(U\cup V,E)$ 的派单策略，$(u,v)$ 满足 $u\in U,v\in V$且$u$ 和$v$都只在$\mathcal{M}$中出现过一次，通过计算派单策略 $\mathcal{M}$下的边权和定义使用率函数(utility function)<br>$$<br>SUM(\mathcal{M}(G))&#x3D;\sum_{(u,v)\in \mathcal{M}}w(u,v)<br>$$<br><em><strong>Order Dispatching Problem.</strong></em> 给定batch序列 $&lt;1,2,…,T&gt;$ ， $t$ 的上一个batch就抵达的订单和司机可以构建当前的二分图 $G^{(t)}$，目标是找到最佳分配策略 $\mathcal {M}^{(t)}$ 使得所有batch的使用率和最高<br>$$<br>max\sum_{t&#x3D;1}^TSUM(\mathcal {M}^{(t)}(G^{(t)}))<br>$$<br>有 $K$ 个平台$P_1,P_2,…,P_K$和一个服务器 $S$，每个平台 $P_k$ 有一个本地二分图 $G_K&#x3D;(U_k\cup V_k,E_k)$，里面的节点对应该平台的司机和订单</p>
-<p><em><strong>Global Optimum.</strong></em> $G$ 为全局二分图，全局最优 $\mu(G)$ 可以理解为在非联邦设置下的最优匹配结果<br>$$<br>\mu(G)&#x3D;\mathop{max}<em>{&lt;\mathcal{M}^{(t)}&gt;}\sum</em>{t&#x3D;1}^TSUM(\mathcal {M}^{(t)}(G^{(t)}))<br>$$<br><em><strong>Summation of Local Optimum.</strong></em> $\mu(G_{LS})$ 是本地所有二分图的联合<br>$$<br>\mu(G_{LS})&#x3D;\sum_{k&#x3D;1}^K\mu(G_k)<br>$$<br>每个平台的信息共享策略可以被定义为一个子图序列，$K$ 个平台即 $&lt;\mathcal{G}_1,…,\mathcal{G}_K&gt;$ ，其中$\mathcal {G}&#x3D;\cup _{k&#x3D;1}^K\mathcal{G}_k$，对于全局最优，$\mathcal{G}_k&#x3D;G_k$，对于本地最优的和，$\mathcal{G}_k&#x3D;\mathbb {0}$</p>
-<p><em><strong>Federated Order Dispatching Problem(FOD).</strong></em>  要找到$G_{Fed}&#x3D;G_{LS}\cup \mathcal{G}$ 的信息共享策略 $&lt;\mathcal{G}<em>1,…,\mathcal{G}_K&gt;$ 使得<br>$$<br>\mu(G</em>{Fed})-\mu(G_{LS})&gt;\Delta<br>$$<br>目标是使得 $\Delta$ 尽可能大，在满足隐私限制的前提下，使联合订单分配达到与全局最优相似的表现</p>
-<h4 id="算法介绍"><a href="#算法介绍" class="headerlink" title="算法介绍"></a>算法介绍</h4><p><strong><u>本地学习和派单(Local learning and dispatching)</u></strong></p>
-<p>将司机作为agents，司机的地理位置(六边形网格表示)作为states，接单或保持空闲作为actions，价值函数是从某个状态得到的期望累积奖励，即 $\mathcal{V}(s^{(t)})&#x3D;\mathbb{E}[\sum_tr^{(t)}|s^{(t)}]$，其中$s^{(t)}、r^{(t)}$分别表示batch t内的状态向量和奖励和，价值函数的更新遵循贝尔曼方程，其中，$\alpha_l、\gamma$ 分别表示学习率和折扣因子。<br>$$<br>\mathcal{V}(𝑠^{(t)})\leftarrow\mathcal{V}(𝑠^{(t)})+\alpha_𝑙·\sum_u(r_u^{(t)}+\gamma\mathcal{V}(s_v^{(t+1)})-\mathcal{V}(s_u^{(t)}))<br>$$<br>每个平台根据已学到的价值做分单决策。将未来奖励的期望通过时间差分误差(TD error)编码为二分图的边权重<br>$$<br>w(u,v)&#x3D;v.reward+\gamma\mathcal{V}(s_v^{(t+1)})-\mathcal{V}(s_u^{(t)})<br>$$</p>
+<h4 id="问题建模">问题建模</h4>
+<p><strong><em>Drivers Set.</em></strong> 司机集合<span class="math inline">\(U\)</span>，<span class="math inline">\(u\in
+U\)</span>，<span class="math inline">\(u.loc\)</span>
+表示司机的位置</p>
+<p><strong><em>Orders Set.</em></strong> 订单集合<span class="math inline">\(V\)</span>， <span class="math inline">\(v\in
+V\)</span>，<span class="math inline">\(v.origin,v.destination,v.reward\)</span>
+分别表示订单的出发地、目的地和订单价格</p>
+<p>在二分图 <span class="math inline">\(G=(U\cup V,E)\)</span>
+中，边<span class="math inline">\(e=(e,v)\)</span> 的权重 <span class="math inline">\(w(u,v)=v.reward\)</span>，当<span class="math inline">\(u.loc\)</span> 和 <span class="math inline">\(v.origin\)</span> 之间的距离超过一定的阈值<span class="math inline">\(R\)</span> 后，对应的边会被剪枝</p>
+<p><strong><em>Matching Allocation.</em></strong> <span class="math inline">\(\mathcal{M}\)</span> 表示一个对二分图 <span class="math inline">\(G=(U\cup V,E)\)</span> 的派单策略，<span class="math inline">\((u,v)\)</span> 满足 <span class="math inline">\(u\in U,v\in V\)</span>且<span class="math inline">\(u\)</span> 和<span class="math inline">\(v\)</span>都只在<span class="math inline">\(\mathcal{M}\)</span>中出现过一次，通过计算派单策略
+<span class="math inline">\(\mathcal{M}\)</span>下的边权和定义使用率函数(utility
+function) <span class="math display">\[
+SUM(\mathcal{M}(G))=\sum_{(u,v)\in \mathcal{M}}w(u,v)
+\]</span> <strong><em>Order Dispatching Problem.</em></strong>
+给定batch序列 <span class="math inline">\(&lt;1,2,...,T&gt;\)</span> ，
+<span class="math inline">\(t\)</span>
+的上一个batch就抵达的订单和司机可以构建当前的二分图 <span class="math inline">\(G^{(t)}\)</span>，目标是找到最佳分配策略 <span class="math inline">\(\mathcal {M}^{(t)}\)</span>
+使得所有batch的使用率和最高 <span class="math display">\[
+max\sum_{t=1}^TSUM(\mathcal {M}^{(t)}(G^{(t)}))
+\]</span> 有 <span class="math inline">\(K\)</span> 个平台<span class="math inline">\(P_1,P_2,...,P_K\)</span>和一个服务器 <span class="math inline">\(S\)</span>，每个平台 <span class="math inline">\(P_k\)</span> 有一个本地二分图 <span class="math inline">\(G_K=(U_k\cup
+V_k,E_k)\)</span>，里面的节点对应该平台的司机和订单</p>
+<p><strong><em>Global Optimum.</em></strong> <span class="math inline">\(G\)</span> 为全局二分图，全局最优 <span class="math inline">\(\mu(G)\)</span>
+可以理解为在非联邦设置下的最优匹配结果 <span class="math display">\[
+\mu(G)=\mathop{max}_{&lt;\mathcal{M}^{(t)}&gt;}\sum_{t=1}^TSUM(\mathcal
+{M}^{(t)}(G^{(t)}))
+\]</span> <strong><em>Summation of Local Optimum.</em></strong> <span class="math inline">\(\mu(G_{LS})\)</span> 是本地所有二分图的联合 <span class="math display">\[
+\mu(G_{LS})=\sum_{k=1}^K\mu(G_k)
+\]</span> 每个平台的信息共享策略可以被定义为一个子图序列，<span class="math inline">\(K\)</span> 个平台即 <span class="math inline">\(&lt;\mathcal{G}_1,...,\mathcal{G}_K&gt;\)</span>
+，其中<span class="math inline">\(\mathcal {G}=\cup
+_{k=1}^K\mathcal{G}_k\)</span>，对于全局最优，<span class="math inline">\(\mathcal{G}_k=G_k\)</span>，对于本地最优的和，<span class="math inline">\(\mathcal{G}_k=\mathbb {0}\)</span></p>
+<p><strong><em>Federated Order Dispatching Problem(FOD).</em></strong>
+要找到<span class="math inline">\(G_{Fed}=G_{LS}\cup
+\mathcal{G}\)</span> 的信息共享策略 <span class="math inline">\(&lt;\mathcal{G}_1,...,\mathcal{G}_K&gt;\)</span>
+使得 <span class="math display">\[
+\mu(G_{Fed})-\mu(G_{LS})&gt;\Delta
+\]</span> 目标是使得 <span class="math inline">\(\Delta\)</span>
+尽可能大，在满足隐私限制的前提下，使联合订单分配达到与全局最优相似的表现</p>
+<h4 id="算法介绍">算法介绍</h4>
+<p><strong><u>本地学习和派单(Local learning and
+dispatching)</u></strong></p>
+<p>将司机作为agents，司机的地理位置(六边形网格表示)作为states，接单或保持空闲作为actions，价值函数是从某个状态得到的期望累积奖励，即
+<span class="math inline">\(\mathcal{V}(s^{(t)})=\mathbb{E}[\sum_tr^{(t)}|s^{(t)}]\)</span>，其中<span class="math inline">\(s^{(t)}、r^{(t)}\)</span>分别表示batch
+t内的状态向量和奖励和，价值函数的更新遵循贝尔曼方程，其中，<span class="math inline">\(\alpha_l、\gamma\)</span>
+分别表示学习率和折扣因子。 <span class="math display">\[
+\mathcal{V}(𝑠^{(t)})\leftarrow\mathcal{V}(𝑠^{(t)})+\alpha_𝑙·\sum_u(r_u^{(t)}+\gamma\mathcal{V}(s_v^{(t+1)})-\mathcal{V}(s_u^{(t)}))
+\]</span>
+每个平台根据已学到的价值做分单决策。将未来奖励的期望通过时间差分误差(TD
+error)编码为二分图的边权重 <span class="math display">\[
+w(u,v)=v.reward+\gamma\mathcal{V}(s_v^{(t+1)})-\mathcal{V}(s_u^{(t)})
+\]</span></p>
 <p>重建二分图后，采用基于匈牙利方法的二分图最大匹配做本地分配决策。每个平台可以独立地在本地运行，服务器将所有平台的奖励和相加作为baseline(本实验中即LocalSum)</p>
-<p><strong><u>分配模型聚合(Aggregation of Dispatching Models)</u></strong></p>
+<p><strong><u>分配模型聚合(Aggregation of Dispatching
+Models)</u></strong></p>
 <p><strong>随机掩码下的隐私聚合——针对聚合期间的隐私泄露</strong></p>
-<p>采用随机掩码(random masking)模糊已升级的网格状态来保护值更新的隐私，$\Delta \mathcal{V}<em>k$ 是平台 $k$ 更新后的价值表，通过下面的掩码方法实现扰乱$\Delta \mathcal{V}<em>k$ 的值<br>$$<br>\Delta\tilde{\mathcal{V}<em>k}&#x3D;\Delta\mathcal{V}<em>k+\sum</em>{k’&lt;k}PRG(sd</em>{k,k’})-\sum</em>{k’&lt;k}PRG(sd</em>{k’,k})<br>$$<br>$PRG(·)$是一个伪随机生成器，$sd_{k,k’}$是一个由平台$k,k’$ 通过密钥协商算法(key agreement algorithm)生成的随机种子。如下图所示，没有随机掩码的情况下更容易被推断哪个网格被更新了，而随机掩码后敏感信息就难以推断了。</p>
-<p>![](..&#x2F;img&#x2F;random masking.png)</p>
+<p>采用随机掩码(random
+masking)模糊已升级的网格状态来保护值更新的隐私，<span class="math inline">\(\Delta \mathcal{V}_k\)</span> 是平台 <span class="math inline">\(k\)</span>
+更新后的价值表，通过下面的掩码方法实现扰乱<span class="math inline">\(\Delta \mathcal{V}_k\)</span> 的值 <span class="math display">\[
+\Delta\tilde{\mathcal{V}_k}=\Delta\mathcal{V}_k+\sum_{k&#39;&lt;k}PRG(sd_{k,k&#39;})-\sum_{k&#39;&lt;k}PRG(sd_{k&#39;,k})
+\]</span> <span class="math inline">\(PRG(·)\)</span>是一个伪随机生成器，<span class="math inline">\(sd_{k,k&#39;}\)</span>是一个由平台<span class="math inline">\(k,k&#39;\)</span> 通过密钥协商算法(key agreement
+algorithm)生成的随机种子。如下图所示，没有随机掩码的情况下更容易被推断哪个网格被更新了，而随机掩码后敏感信息就难以推断了。</p>
+<p><img src="/2023/04/01/Fed-LTD/random_masking.png" srcset="/img/loading.gif" lazyload></p>
 <p><strong>推迟同步——针对服务器和各平台之间的高通讯代价</strong></p>
-<p>服务器从每个batch同步一次推迟至每 $t_d$ 个batches进行一次值同步，将通讯代价减少了$1&#x2F;t_d$</p>
-<p><strong><u>分配决策聚合(Aggregation of Dispatching Decisions)</u></strong></p>
+<p>服务器从每个batch同步一次推迟至每 <span class="math inline">\(t_d\)</span>
+个batches进行一次值同步，将通讯代价减少了<span class="math inline">\(1/t_d\)</span></p>
+<p><strong><u>分配决策聚合(Aggregation of Dispatching
+Decisions)</u></strong></p>
 <p><strong>重建全局二分图</strong></p>
-<p>设计基于局部敏感哈希(Locality Sensitive Hashing, LSH)的方法平衡隐私和效率，在哈希后依旧保持了最近邻组合<br>$$<br>\text{If } dist(u,v)\le R,\text{  then }Pr[h(u)&#x3D;h(v)]\ge p_1\<br>\text{If } dist(u,v)\ge c·R,\text{  then }Pr[h(u)&#x3D;h(v)]\le p_2<br>$$<br>$dist(·,·)$ 表示欧几里得距离，$R$ 是连接性阈值(比如3km)， $h$ 是哈希函数</p>
-<p>通过LSH编码，可以生成由 $\mathcal{K}$ 个哈希函数表示的一个节点 $v$ 的签名 $Sig(v)&#x3D;&lt;h_1(v),···，h_{\mathcal{K}}(v)&gt;$，再采用MD5编码哈希函数来保护LSH编码中的相关位置，加密后的签名为$SSig(v)&#x3D;MD5(Concat(h(v))$，种子 $Concat(h(v))$是 $\mathcal{K}$ 个二元哈希编码的拼接。编码算法生成要共享的节点的加密签名，服务器通过解码重建二分图。</p>
+<p>设计基于局部敏感哈希(Locality Sensitive Hashing,
+LSH)的方法平衡隐私和效率，在哈希后依旧保持了最近邻组合 <span class="math display">\[
+\text{If } dist(u,v)\le R,\text{  then }Pr[h(u)=h(v)]\ge p_1\\
+\text{If } dist(u,v)\ge c·R,\text{  then }Pr[h(u)=h(v)]\le p_2
+\]</span> <span class="math inline">\(dist(·,·)\)</span>
+表示欧几里得距离，<span class="math inline">\(R\)</span>
+是连接性阈值(比如3km)， <span class="math inline">\(h\)</span>
+是哈希函数</p>
+<p>通过LSH编码，可以生成由 <span class="math inline">\(\mathcal{K}\)</span> 个哈希函数表示的一个节点
+<span class="math inline">\(v\)</span> 的签名 <span class="math inline">\(Sig(v)=&lt;h_1(v),···，h_{\mathcal{K}}(v)&gt;\)</span>，再采用MD5编码哈希函数来保护LSH编码中的相关位置，加密后的签名为<span class="math inline">\(SSig(v)=MD5(Concat(h(v))\)</span>，种子 <span class="math inline">\(Concat(h(v))\)</span>是 <span class="math inline">\(\mathcal{K}\)</span>
+个二元哈希编码的拼接。编码算法生成要共享的节点的加密签名，服务器通过解码重建二分图。</p>
 <p><strong>差分隐私混淆边权</strong></p>
-<p>恢复全局二分图结构后，需要计算由强化学习生成的边权。$v.origin$ 和 $u.loc$ 相近，根据价值函数的连续性，有 $\mathcal{V}(v.origin)\approx\mathcal{V}(u.loc)$，那么权重的计算公式可以重写为如下只与订单 $v$ 有关的公式<br>$$<br>w(u,v)\approx v.reward+\gamma\mathcal{V}(v.destination)-\mathcal{V}(v.origin)<br>$$<br>采用差分隐私来扰动 $w(u,v)$，服务器就难以通过网格值推断订单和司机的位置。将Laplace噪声加入到边权计算中，敏感度可以通过 $\Delta <em>{\mathcal{V}}&#x3D;\gamma\mathcal{V}</em>{max}-\mathcal{V}<em>{min}-(\gamma\mathcal{V}</em>{min}-\mathcal{V}<em>{max})&#x3D;(1+\gamma)diam(\mathcal{V})$ 计算，其中$diam(\mathcal{V})&#x3D;\mathcal{V}</em>{max}-\mathcal{V}_{min}$，那么扰动可以写为<br>$$<br>\tilde{w}(v)&#x3D;w(u,v)+Lap(\frac{(1+\gamma)diam(\mathcal{V})}{\epsilon_p})<br>$$<br>其中，$\epsilon_p$ 为隐私预算(privacy budget)。假设 $v$ 和 $v’$ 为两个有同样奖励但任意的起点和目的地，根据Laplace机制，有<br>$$<br>\frac{Pr[\tilde{w}(v)&#x3D;w]}{Pr[\tilde{w}(v’)&#x3D;w]}\le exp(\frac{\epsilon_p}{(1+\gamma)diam(\mathcal{V})}|w(v)-w(v’)|)\le e^{\epsilon_p}<br>$$<br>该公式表示在扰动后难以区分两个订单($v$ 和 $v’$)，服务器难以从边权推断该条边属于哪个订单。每个平台上传经干扰后的边权。最后服务器用贪心算法实现全局匹配，每个平台的司机都可以得到额外的来自其他平台的订单。</p>
-<h4 id="算法流程"><a href="#算法流程" class="headerlink" title="算法流程"></a>算法流程</h4><p><img src="/../img/framework.png" srcset="/img/loading.gif" lazyload></p>
-<ol>
-<li><p>本地学习和派单：每个平台本地学习一个价值函数并基于价值函数做分单决策</p>
-</li>
-<li><p>聚合分配模型：将联邦学习用于聚合分配模型，同时考虑到隐私保护和效率优化</p>
-</li>
-<li><p>聚合分配决策：通过聚合本地的残差二分图(每个平台未匹配的节点)共享分配决策</p>
-</li>
+<p>恢复全局二分图结构后，需要计算由强化学习生成的边权。<span class="math inline">\(v.origin\)</span> 和 <span class="math inline">\(u.loc\)</span> 相近，根据价值函数的连续性，有
+<span class="math inline">\(\mathcal{V}(v.origin)\approx\mathcal{V}(u.loc)\)</span>，那么权重的计算公式可以重写为如下只与订单
+<span class="math inline">\(v\)</span> 有关的公式 <span class="math display">\[
+w(u,v)\approx
+v.reward+\gamma\mathcal{V}(v.destination)-\mathcal{V}(v.origin)
+\]</span> 采用差分隐私来扰动 <span class="math inline">\(w(u,v)\)</span>，服务器就难以通过网格值推断订单和司机的位置。将Laplace噪声加入到边权计算中，敏感度可以通过
+<span class="math inline">\(\Delta
+_{\mathcal{V}}=\gamma\mathcal{V}_{max}-\mathcal{V}_{min}-(\gamma\mathcal{V}_{min}-\mathcal{V}_{max})=(1+\gamma)diam(\mathcal{V})\)</span>
+计算，其中<span class="math inline">\(diam(\mathcal{V})=\mathcal{V}_{max}-\mathcal{V}_{min}\)</span>，那么扰动可以写为
+<span class="math display">\[
+\tilde{w}(v)=w(u,v)+Lap(\frac{(1+\gamma)diam(\mathcal{V})}{\epsilon_p})
+\]</span> 其中，<span class="math inline">\(\epsilon_p\)</span>
+为隐私预算(privacy budget)。假设 <span class="math inline">\(v\)</span>
+和 <span class="math inline">\(v&#39;\)</span>
+为两个有同样奖励但任意的起点和目的地，根据Laplace机制，有 <span class="math display">\[
+\frac{Pr[\tilde{w}(v)=w]}{Pr[\tilde{w}(v&#39;)=w]}\le
+exp(\frac{\epsilon_p}{(1+\gamma)diam(\mathcal{V})}|w(v)-w(v&#39;)|)\le
+e^{\epsilon_p}
+\]</span> 该公式表示在扰动后难以区分两个订单(<span class="math inline">\(v\)</span> 和 <span class="math inline">\(v&#39;\)</span>)，服务器难以从边权推断该条边属于哪个订单。每个平台上传经干扰后的边权。最后服务器用贪心算法实现全局匹配，每个平台的司机都可以得到额外的来自其他平台的订单。</p>
+<h4 id="算法流程">算法流程</h4>
+<p><img src="/2023/04/01/Fed-LTD/framework.png" srcset="/img/loading.gif" lazyload></p>
+<ol type="1">
+<li><p>本地学习和派单：每个平台本地学习一个价值函数并基于价值函数做分单决策</p></li>
+<li><p>聚合分配模型：将联邦学习用于聚合分配模型，同时考虑到隐私保护和效率优化</p></li>
+<li><p>聚合分配决策：通过聚合本地的残差二分图(每个平台未匹配的节点)共享分配决策</p></li>
 </ol>
 
                 
@@ -374,7 +453,7 @@
   <div class="license-box my-3">
     <div class="license-title">
       <div>【Note】Fed-LTD</div>
-      <div>http://example.com/2023/04/01/Fed-LTD Towards Cross-Platform Ride Hailing via Federated Learning to Dispatch/</div>
+      <div>http://example.com/2023/04/01/Fed-LTD/</div>
     </div>
     <div class="license-meta">
       
@@ -486,6 +565,12 @@
 
 
   
+
+
+  
+  
+
+
 
 
 
@@ -703,6 +788,49 @@
 
 
   <script>Fluid.plugins.imageCaption();</script>
+
+  
+      <script>
+        if (!window.MathJax) {
+          window.MathJax = {
+            tex    : {
+              inlineMath: { '[+]': [['$', '$']] }
+            },
+            loader : {
+              load: ['ui/lazy']
+            },
+            options: {
+              renderActions: {
+                insertedScript: [200, () => {
+                  document.querySelectorAll('mjx-container').forEach(node => {
+                    let target = node.parentNode;
+                    if (target.nodeName.toLowerCase() === 'li') {
+                      target.parentNode.classList.add('has-jax');
+                    }
+                  });
+                }, '', false]
+              }
+            }
+          };
+        } else {
+          MathJax.startup.document.state(0);
+          MathJax.texReset();
+          MathJax.typeset();
+          MathJax.typesetPromise();
+        }
+
+        Fluid.events.registerRefreshCallback(function() {
+          if ('MathJax' in window && MathJax.startup.document && typeof MathJax.startup.document.state === 'function') {
+            MathJax.startup.document.state(0);
+            MathJax.texReset();
+            MathJax.typeset();
+            MathJax.typesetPromise();
+          }
+        });
+      </script>
+    
+
+  <script  src="https://lib.baomitu.com/mathjax/3.2.2/es5/tex-mml-chtml.js" ></script>
 
   <script  src="/js/local-search.js" ></script>
 
